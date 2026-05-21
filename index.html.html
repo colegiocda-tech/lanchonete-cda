@@ -1,0 +1,3141 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Lanchonete · Colégio CDA</title>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,600;0,9..144,800;1,9..144,500&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+/* ============================================================
+   IDENTIDADE VISUAL CDA
+   Turquesa: #26B7C9 · Amarelo: #F2C12E · Vermelho: #E63946
+   ============================================================ */
+:root {
+  --turquesa: #26B7C9;
+  --turquesa-escuro: #1A8E9D;
+  --turquesa-claro: #E8F7F9;
+  --amarelo: #F2C12E;
+  --amarelo-claro: #FEF6DC;
+  --vermelho: #E63946;
+  --vermelho-escuro: #C42836;
+  --vermelho-claro: #FCE8EA;
+  --verde: #10b981;
+  --verde-claro: #d1fae5;
+  --whatsapp: #25D366;
+  --pedra-50: #fafaf9;
+  --pedra-100: #f5f5f4;
+  --pedra-200: #e7e5e4;
+  --pedra-300: #d6d3d1;
+  --pedra-500: #78716c;
+  --pedra-600: #57534e;
+  --pedra-700: #44403c;
+  --pedra-900: #1c1917;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  font-family: 'DM Sans', system-ui, -apple-system, sans-serif;
+  color: var(--pedra-900);
+  background: var(--pedra-50);
+  line-height: 1.5;
+  min-height: 100vh;
+}
+
+button { font-family: inherit; cursor: pointer; border: none; background: none; }
+input, textarea, select { font-family: inherit; }
+
+.serif { font-family: 'Fraunces', Georgia, serif; }
+
+/* utilitários */
+.hidden { display: none !important; }
+.flex { display: flex; }
+.flex-col { flex-direction: column; }
+.items-center { align-items: center; }
+.justify-center { justify-content: center; }
+.justify-between { justify-content: space-between; }
+.gap-2 { gap: 8px; }
+.gap-3 { gap: 12px; }
+.gap-4 { gap: 16px; }
+.gap-6 { gap: 24px; }
+.text-center { text-align: center; }
+.w-full { width: 100%; }
+
+/* ============================================================
+   LOGO
+   ============================================================ */
+.logo {
+  display: inline-block;
+  height: auto;
+  max-width: 100%;
+}
+.logo-sm { height: 40px; }
+.logo-md { height: 70px; }
+.logo-lg { height: 110px; }
+.logo-xl { height: 140px; }
+
+/* ============================================================
+   TELA DE LOGIN
+   ============================================================ */
+.login-bg {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  background: radial-gradient(ellipse at top, var(--turquesa-claro) 0%, #ffffff 60%, var(--amarelo-claro) 100%);
+}
+
+.login-card {
+  width: 100%;
+  max-width: 440px;
+  background: white;
+  border-radius: 28px;
+  padding: 36px 32px;
+  box-shadow: 0 20px 50px rgba(0,0,0,0.08);
+  border: 4px solid var(--turquesa);
+  transition: border-color 0.3s ease;
+}
+.login-card.modo-colegio {
+  border-color: var(--vermelho);
+}
+
+.login-logo-wrap {
+  text-align: center;
+  margin-bottom: 18px;
+}
+
+.login-titulo {
+  text-align: center;
+  font-family: 'Fraunces', serif;
+  font-size: 28px;
+  font-weight: 800;
+  color: var(--turquesa);
+  margin-bottom: 4px;
+  letter-spacing: -0.02em;
+  transition: color 0.3s ease;
+}
+.modo-colegio .login-titulo { color: var(--vermelho); }
+
+.login-subtitulo {
+  text-align: center;
+  color: var(--pedra-500);
+  font-size: 14px;
+  margin-bottom: 24px;
+}
+
+/* Switch */
+.switch-modo {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  background: var(--pedra-100);
+  border-radius: 14px;
+  padding: 4px;
+  margin-bottom: 24px;
+  position: relative;
+}
+.switch-modo button {
+  padding: 12px 8px;
+  border-radius: 10px;
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--pedra-600);
+  transition: all 0.25s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+}
+.switch-modo button.ativo-pai {
+  background: white;
+  color: var(--turquesa);
+  box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+}
+.switch-modo button.ativo-colegio {
+  background: white;
+  color: var(--vermelho);
+  box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+}
+
+/* Form */
+.form-group { margin-bottom: 14px; }
+.form-label {
+  display: block;
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--pedra-500);
+  margin-bottom: 6px;
+}
+.form-input, .form-textarea, .form-select {
+  width: 100%;
+  padding: 12px 14px;
+  border: 2px solid var(--pedra-200);
+  border-radius: 12px;
+  font-size: 15px;
+  background: white;
+  transition: border-color 0.2s;
+  outline: none;
+}
+.form-input:focus, .form-textarea:focus, .form-select:focus {
+  border-color: var(--turquesa);
+}
+.form-textarea { resize: vertical; min-height: 70px; }
+.input-senha-wrap { position: relative; }
+.input-senha-toggle {
+  position: absolute;
+  right: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--pedra-500);
+  padding: 4px;
+}
+
+/* Botões */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 12px 18px;
+  border-radius: 12px;
+  font-weight: 700;
+  font-size: 15px;
+  transition: all 0.2s;
+  text-decoration: none;
+  white-space: nowrap;
+}
+.btn:hover { transform: translateY(-1px); }
+.btn:active { transform: translateY(0); }
+.btn-primary {
+  background: var(--turquesa);
+  color: white;
+}
+.btn-primary:hover { background: var(--turquesa-escuro); }
+.btn-vermelho {
+  background: var(--vermelho);
+  color: white;
+}
+.btn-vermelho:hover { background: var(--vermelho-escuro); }
+.btn-amarelo {
+  background: var(--amarelo);
+  color: var(--pedra-900);
+}
+.btn-secondary {
+  background: white;
+  color: var(--pedra-700);
+  border: 2px solid var(--pedra-200);
+}
+.btn-secondary:hover { border-color: var(--pedra-300); background: var(--pedra-50); }
+.btn-success {
+  background: var(--verde);
+  color: white;
+}
+.btn-success:hover { background: #059669; }
+.btn-whatsapp {
+  background: var(--whatsapp);
+  color: white;
+}
+.btn-whatsapp:hover { background: #1ebe57; }
+.btn-block { display: flex; width: 100%; padding: 14px 18px; }
+.btn-sm { padding: 8px 12px; font-size: 13px; }
+.btn-icon { padding: 8px; }
+.btn-ghost {
+  background: transparent;
+  color: var(--pedra-600);
+}
+.btn-ghost:hover { background: var(--pedra-100); }
+
+/* Alerta */
+.alert {
+  padding: 12px 14px;
+  border-radius: 12px;
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  font-size: 14px;
+  margin-bottom: 12px;
+}
+.alert-erro {
+  background: var(--vermelho-claro);
+  color: var(--vermelho-escuro);
+}
+.alert-sucesso {
+  background: var(--verde-claro);
+  color: #065f46;
+}
+
+/* ============================================================
+   APP / DASHBOARD
+   ============================================================ */
+.app {
+  min-height: 100vh;
+  background: var(--pedra-50);
+}
+.app-pais {
+  background: linear-gradient(180deg, var(--turquesa-claro) 0%, #ffffff 50%, var(--amarelo-claro) 100%);
+}
+
+.header {
+  background: white;
+  border-bottom: 4px solid var(--turquesa);
+  position: sticky;
+  top: 0;
+  z-index: 10;
+}
+.header-colegio {
+  background: var(--turquesa);
+  border-bottom: 4px solid var(--amarelo);
+  color: white;
+}
+
+.header-inner {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 12px 24px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.header-user {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+}
+.header-user-info { text-align: right; }
+.header-user-info small { display: block; font-size: 11px; opacity: 0.7; }
+.header-user-info strong { font-weight: 700; }
+
+.tabs {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 24px;
+  display: flex;
+  gap: 2px;
+  overflow-x: auto;
+}
+.tab {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 12px 16px;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--pedra-500);
+  border-bottom: 3px solid transparent;
+  white-space: nowrap;
+  transition: all 0.2s;
+}
+.header-colegio .tab { color: rgba(255,255,255,0.7); }
+.tab:hover { color: var(--pedra-900); }
+.header-colegio .tab:hover { color: white; }
+.tab.ativa {
+  color: var(--turquesa);
+  border-bottom-color: var(--turquesa);
+}
+.header-colegio .tab.ativa {
+  color: var(--amarelo);
+  border-bottom-color: var(--amarelo);
+}
+
+.main {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 32px 24px;
+}
+.main-pais { max-width: 720px; }
+
+.page-titulo {
+  font-family: 'Fraunces', serif;
+  font-size: 36px;
+  font-weight: 800;
+  color: var(--turquesa);
+  margin-bottom: 4px;
+  letter-spacing: -0.02em;
+}
+.page-subtitulo {
+  color: var(--pedra-600);
+  margin-bottom: 28px;
+}
+
+/* Progresso */
+.progresso {
+  display: flex;
+  gap: 6px;
+  margin-bottom: 28px;
+}
+.progresso-step {
+  flex: 1;
+  height: 6px;
+  border-radius: 3px;
+  background: var(--pedra-200);
+  transition: background 0.3s;
+}
+.progresso-step.ativa { background: var(--turquesa); }
+
+/* Cards */
+.card {
+  background: white;
+  border: 2px solid var(--pedra-200);
+  border-radius: 18px;
+  padding: 20px;
+  transition: all 0.2s;
+}
+.card-clickable { cursor: pointer; text-align: left; width: 100%; }
+.card-clickable:hover {
+  border-color: var(--turquesa);
+  box-shadow: 0 8px 20px rgba(0,0,0,0.05);
+  transform: translateY(-1px);
+}
+
+.card-info {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  margin-bottom: 32px;
+}
+@media (min-width: 768px) {
+  .card-info { grid-template-columns: repeat(4, 1fr); }
+}
+
+.kpi {
+  border-radius: 18px;
+  padding: 18px;
+  color: white;
+}
+.kpi-label {
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  opacity: 0.85;
+  margin-bottom: 4px;
+}
+.kpi-valor {
+  font-family: 'Fraunces', serif;
+  font-size: 26px;
+  font-weight: 800;
+  line-height: 1.1;
+}
+.kpi-icon {
+  width: 22px; height: 22px; opacity: 0.85; margin-bottom: 8px;
+}
+.kpi-stone { background: var(--pedra-900); }
+.kpi-amarelo { background: var(--amarelo); color: #7c2d12; }
+.kpi-turquesa { background: var(--turquesa); }
+.kpi-vermelho { background: var(--vermelho); }
+.kpi-verde { background: var(--verde); }
+
+.grid-2 { display: grid; grid-template-columns: 1fr; gap: 24px; }
+@media (min-width: 1024px) { .grid-2 { grid-template-columns: 1fr 1fr; } }
+
+.grid-3 { display: grid; grid-template-columns: 1fr; gap: 16px; }
+@media (min-width: 768px) { .grid-3 { grid-template-columns: repeat(2, 1fr); } }
+@media (min-width: 1024px) { .grid-3 { grid-template-columns: repeat(3, 1fr); } }
+
+/* Aluno button (para selecionar) */
+.aluno-btn {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  background: white;
+  padding: 14px;
+  border-radius: 16px;
+  border: 2px solid var(--pedra-200);
+  width: 100%;
+  text-align: left;
+  margin-bottom: 8px;
+  transition: all 0.2s;
+}
+.aluno-btn:hover {
+  border-color: var(--turquesa);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+}
+.aluno-avatar {
+  width: 48px; height: 48px;
+  border-radius: 50%;
+  background: var(--turquesa);
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 800;
+  font-size: 18px;
+  flex-shrink: 0;
+}
+.aluno-nome { font-weight: 700; }
+.aluno-meta { font-size: 13px; color: var(--pedra-500); }
+
+/* Produto card */
+.produto-card {
+  background: white;
+  padding: 14px;
+  border-radius: 16px;
+  border: 2px solid var(--pedra-200);
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-bottom: 10px;
+}
+.produto-emoji { font-size: 36px; }
+.produto-info { flex: 1; }
+.produto-nome { font-weight: 700; }
+.produto-preco { color: var(--verde); font-weight: 700; }
+
+.qtd-controls {
+  display: flex; align-items: center; gap: 8px;
+}
+.qtd-btn {
+  width: 36px; height: 36px;
+  border-radius: 50%;
+  background: var(--pedra-200);
+  color: var(--pedra-700);
+  font-weight: 800;
+  font-size: 18px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.15s;
+}
+.qtd-btn-add {
+  background: var(--turquesa);
+  color: white;
+}
+.qtd-btn:hover { transform: scale(1.05); }
+.qtd-num { font-weight: 800; font-size: 18px; min-width: 24px; text-align: center; }
+
+/* Carrinho fixo */
+.cart-bar {
+  position: sticky;
+  bottom: 16px;
+  margin-top: 16px;
+  background: var(--verde);
+  color: white;
+  padding: 16px 20px;
+  border-radius: 18px;
+  font-weight: 700;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  box-shadow: 0 10px 30px rgba(16,185,129,0.3);
+  cursor: pointer;
+}
+.cart-bar-total { color: var(--amarelo); }
+
+/* Resumo aluno (header) */
+.resumo-aluno {
+  background: var(--turquesa);
+  color: white;
+  padding: 16px 18px;
+  border-radius: 16px;
+  margin-bottom: 20px;
+}
+.resumo-aluno-label {
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  opacity: 0.85;
+}
+.resumo-aluno-nome {
+  font-size: 20px;
+  font-weight: 800;
+  font-family: 'Fraunces', serif;
+}
+
+/* Lista de itens */
+.itens-lista { padding: 0; }
+.item-row {
+  display: flex;
+  justify-content: space-between;
+  padding: 8px 0;
+  border-bottom: 1px solid var(--pedra-100);
+}
+.item-row:last-child { border-bottom: none; }
+.total-row {
+  display: flex;
+  justify-content: space-between;
+  padding-top: 12px;
+  margin-top: 8px;
+  border-top: 2px solid var(--pedra-200);
+  font-weight: 800;
+}
+.total-valor {
+  font-family: 'Fraunces', serif;
+  font-size: 22px;
+  color: var(--verde);
+}
+
+/* Toggle pagamento */
+.toggle-grupo {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+.toggle-opcao {
+  padding: 14px;
+  border-radius: 12px;
+  border: 2px solid var(--pedra-200);
+  font-weight: 700;
+  color: var(--pedra-600);
+  background: white;
+  transition: all 0.2s;
+}
+.toggle-opcao.ativo {
+  border-color: var(--turquesa);
+  background: var(--turquesa-claro);
+  color: var(--turquesa);
+}
+
+/* Sucesso */
+.sucesso-card {
+  background: white;
+  border: 4px solid var(--verde);
+  border-radius: 24px;
+  padding: 32px 24px;
+  text-align: center;
+  margin-bottom: 16px;
+}
+.sucesso-icon {
+  width: 72px; height: 72px;
+  border-radius: 50%;
+  background: var(--verde-claro);
+  color: var(--verde);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 14px;
+}
+.sucesso-icon svg { width: 40px; height: 40px; }
+
+.pix-card {
+  background: var(--turquesa);
+  color: white;
+  padding: 22px;
+  border-radius: 18px;
+  margin-bottom: 12px;
+}
+.pix-label {
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  font-weight: 700;
+  color: var(--amarelo);
+  margin-bottom: 6px;
+}
+.pix-valor {
+  font-family: 'Fraunces', serif;
+  font-size: 32px;
+  font-weight: 800;
+}
+.pix-nome { font-size: 14px; opacity: 0.9; margin-bottom: 14px; }
+.pix-chave-box {
+  background: rgba(255,255,255,0.18);
+  border-radius: 12px;
+  padding: 12px 14px;
+  margin-bottom: 12px;
+}
+.pix-chave-label { font-size: 11px; opacity: 0.8; margin-bottom: 4px; }
+.pix-chave-valor {
+  font-family: monospace;
+  font-size: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+.pix-chave-copy {
+  color: white;
+  padding: 6px;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+}
+.pix-chave-copy:hover { background: rgba(255,255,255,0.15); }
+
+/* Tabela */
+.tabela-wrap {
+  background: white;
+  border: 2px solid var(--pedra-200);
+  border-radius: 18px;
+  overflow: hidden;
+}
+.tabela {
+  width: 100%;
+  border-collapse: collapse;
+}
+.tabela thead {
+  background: var(--pedra-50);
+}
+.tabela th {
+  text-align: left;
+  padding: 12px 14px;
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--pedra-500);
+}
+.tabela td {
+  padding: 14px;
+  border-top: 1px solid var(--pedra-100);
+  font-size: 14px;
+}
+.tabela tbody tr:hover { background: var(--pedra-50); }
+.tabela .text-right { text-align: right; }
+.tabela .num { font-weight: 700; color: var(--pedra-900); }
+.tabela .vermelho { color: var(--verde); font-weight: 700; }
+
+/* Badge */
+.badge {
+  display: inline-block;
+  font-size: 11px;
+  font-weight: 700;
+  padding: 3px 10px;
+  border-radius: 999px;
+}
+.badge-pendente { background: var(--vermelho-claro); color: var(--vermelho-escuro); }
+.badge-pago { background: var(--verde-claro); color: #065f46; }
+.badge-reservado { background: var(--amarelo-claro); color: #92400e; }
+.badge-entregue { background: var(--pedra-200); color: var(--pedra-700); }
+.badge-cancelado { background: var(--pedra-100); color: var(--pedra-500); text-decoration: line-through; }
+
+/* Pedido card (lanchonete e pais) */
+.pedido-card {
+  background: white;
+  border: 2px solid var(--pedra-200);
+  border-radius: 14px;
+  padding: 14px;
+  margin-bottom: 10px;
+}
+.pedido-card.entregue { background: var(--verde-claro); border-color: #6ee7b7; opacity: 0.7; }
+.pedido-card.cancelado { background: var(--pedra-100); border-color: var(--pedra-200); opacity: 0.6; }
+
+.pedido-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 8px;
+}
+.pedido-aluno-nome { font-weight: 700; color: var(--pedra-900); }
+.pedido-meta { font-size: 12px; color: var(--pedra-500); }
+.pedido-badges {
+  display: flex; flex-direction: column; gap: 4px; align-items: flex-end;
+}
+.pedido-itens { font-size: 13px; color: var(--pedra-700); margin-bottom: 8px; }
+.pedido-obs {
+  font-size: 12px;
+  background: var(--amarelo-claro);
+  color: #92400e;
+  padding: 6px 8px;
+  border-radius: 6px;
+  margin-bottom: 8px;
+}
+.pedido-obs-medica {
+  background: var(--vermelho-claro);
+  color: var(--vermelho-escuro);
+  border: 1px solid var(--vermelho);
+  font-weight: 700;
+}
+.pedido-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 14px;
+}
+.pedido-acoes { display: flex; gap: 4px; }
+
+/* Filtros */
+.filtros { display: flex; gap: 8px; margin-bottom: 20px; flex-wrap: wrap; }
+.filtro-btn {
+  padding: 8px 14px;
+  border-radius: 12px;
+  font-weight: 600;
+  font-size: 13px;
+  background: white;
+  border: 2px solid var(--pedra-200);
+  color: var(--pedra-600);
+  transition: all 0.2s;
+}
+.filtro-btn.ativo {
+  background: var(--turquesa);
+  color: white;
+  border-color: var(--turquesa);
+}
+
+/* Pagamentos pendentes total */
+.pendente-total {
+  background: var(--vermelho-claro);
+  border: 2px solid var(--vermelho);
+  border-radius: 18px;
+  padding: 18px;
+  margin-bottom: 20px;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+.pendente-total svg { color: var(--vermelho); width: 32px; height: 32px; flex-shrink: 0; }
+.pendente-total-label {
+  font-size: 11px; text-transform: uppercase; letter-spacing: 0.05em;
+  font-weight: 700; color: var(--vermelho-escuro);
+}
+.pendente-total-valor {
+  font-family: 'Fraunces', serif; font-size: 28px; font-weight: 800; color: var(--vermelho-escuro);
+}
+
+/* Bar de barra (mais vendidos) */
+.barra-item { margin-bottom: 12px; }
+.barra-info {
+  display: flex; justify-content: space-between;
+  font-size: 13px; margin-bottom: 4px;
+}
+.barra-bar {
+  height: 8px;
+  background: var(--pedra-100);
+  border-radius: 4px;
+  overflow: hidden;
+}
+.barra-fill {
+  height: 100%;
+  background: var(--amarelo);
+  transition: width 0.5s ease;
+}
+
+/* Empty state */
+.empty {
+  text-align: center;
+  padding: 48px 24px;
+  background: white;
+  border: 2px dashed var(--pedra-200);
+  border-radius: 18px;
+  color: var(--pedra-500);
+}
+.empty-icon { width: 48px; height: 48px; color: var(--pedra-300); margin: 0 auto 12px; }
+
+/* Modal */
+.modal-bg {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  z-index: 100;
+  animation: fadeIn 0.2s;
+}
+@keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+.modal {
+  background: white;
+  border-radius: 24px;
+  padding: 28px;
+  max-width: 540px;
+  width: 100%;
+  max-height: 90vh;
+  overflow-y: auto;
+}
+.modal-titulo {
+  font-family: 'Fraunces', serif;
+  font-size: 24px;
+  font-weight: 800;
+  margin-bottom: 4px;
+}
+.modal-subtitulo {
+  color: var(--pedra-500);
+  margin-bottom: 18px;
+  font-size: 14px;
+}
+.modal-acoes {
+  display: flex; gap: 8px; margin-top: 18px;
+}
+.modal-acoes .btn { flex: 1; }
+
+/* Tags pequenas (alergia etc) */
+.tag-medica {
+  display: inline-block;
+  font-size: 11px;
+  background: var(--vermelho-claro);
+  color: var(--vermelho-escuro);
+  padding: 2px 8px;
+  border-radius: 6px;
+  font-weight: 600;
+  margin-top: 4px;
+}
+
+/* Buscar */
+.search-box { position: relative; margin-bottom: 16px; }
+.search-box svg {
+  position: absolute;
+  left: 14px; top: 50%; transform: translateY(-50%);
+  color: var(--pedra-500);
+  width: 18px; height: 18px;
+}
+.search-box input {
+  padding-left: 42px !important;
+}
+
+/* Avisos no topo */
+.aviso {
+  background: var(--amarelo-claro);
+  border: 1px solid var(--amarelo);
+  border-radius: 12px;
+  padding: 12px 14px;
+  margin-bottom: 16px;
+  font-size: 13px;
+  color: #78350f;
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+}
+
+/* ============================================================
+   RESPONSIVO - MOBILE (até 768px)
+   ============================================================ */
+@media (max-width: 768px) {
+  /* Tipografia */
+  .page-titulo { font-size: 26px; }
+  .page-subtitulo { font-size: 14px; margin-bottom: 20px; }
+  .login-card { padding: 28px 22px; }
+  .pix-valor { font-size: 26px; }
+
+  /* Main / padding geral */
+  .main { padding: 20px 14px; }
+
+  /* Header (admin) - mais compacto */
+  .header-inner {
+    padding: 10px 14px;
+    gap: 8px;
+  }
+  .header-colegio .header-inner > div:first-child > div:last-child > div:first-child {
+    font-size: 10px;
+  }
+  .header-colegio .header-inner > div:first-child > div:last-child > div:last-child {
+    font-size: 14px;
+  }
+  .header-user {
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 4px;
+  }
+  .header-user > small {
+    font-size: 11px !important;
+  }
+  .header-user .btn { padding: 6px 10px; font-size: 12px; }
+
+  /* Tabs - barra horizontal scrollável */
+  .tabs {
+    padding: 0 14px;
+    gap: 0;
+  }
+  .tab {
+    padding: 10px 12px;
+    font-size: 13px;
+    gap: 4px;
+  }
+  .tab svg { width: 16px; height: 16px; }
+
+  /* KPIs em grid 2x2 */
+  .card-info {
+    grid-template-columns: repeat(2, 1fr) !important;
+    gap: 10px;
+    margin-bottom: 20px;
+  }
+  .kpi {
+    padding: 14px;
+    border-radius: 14px;
+  }
+  .kpi-valor { font-size: 22px; }
+  .kpi-label { font-size: 10px; }
+
+  /* Grid 2 colunas vira 1 */
+  .grid-2 { gap: 16px; }
+  .grid-3 { gap: 12px; }
+
+  /* Cards mais finos */
+  .card { padding: 16px; border-radius: 14px; }
+
+  /* Filtros - permitir wrap */
+  .filtros {
+    gap: 6px;
+    margin-bottom: 16px;
+  }
+  .filtro-btn {
+    padding: 8px 12px;
+    font-size: 12px;
+    flex: 1;
+    min-width: 0;
+  }
+
+  /* Botão "Novo X" + título no admin: empilhar */
+  .main > div:first-child[style*="flex"] {
+    flex-direction: column !important;
+    align-items: stretch !important;
+    gap: 12px !important;
+  }
+  .main > div:first-child[style*="flex"] .btn {
+    width: 100%;
+  }
+
+  /* TABELAS → vira lista de cards no mobile */
+  .tabela-wrap { border-radius: 14px; }
+  .tabela thead { display: none; }
+  .tabela, .tabela tbody, .tabela tr, .tabela td {
+    display: block;
+    width: 100%;
+  }
+  .tabela tr {
+    padding: 14px;
+    border-top: 1px solid var(--pedra-100);
+    background: white;
+  }
+  .tabela tr:first-child { border-top: none; }
+  .tabela tr:hover { background: white; }
+  .tabela td {
+    padding: 4px 0;
+    border: none;
+    text-align: left !important;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 8px;
+    font-size: 14px;
+  }
+  /* Primeiro td (nome): destaque */
+  .tabela td:first-child {
+    border-bottom: 1px solid var(--pedra-100);
+    padding-bottom: 8px;
+    margin-bottom: 8px;
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  /* Linha de números: rótulo aparece como ::before */
+  .tabela td[data-label]::before {
+    content: attr(data-label);
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--pedra-500);
+    font-weight: 600;
+  }
+  /* Última coluna (botões): full width abaixo */
+  .tabela td:last-child {
+    margin-top: 10px;
+    padding-top: 10px;
+    border-top: 1px solid var(--pedra-100);
+    justify-content: flex-end;
+    gap: 6px;
+  }
+
+  /* Pedido card - mais compacto */
+  .pedido-header {
+    flex-direction: column;
+    gap: 6px;
+  }
+  .pedido-badges {
+    flex-direction: row;
+    flex-wrap: wrap;
+  }
+
+  /* Pagamentos: layout vertical */
+  .tabela-wrap > div[style*="display:flex"] {
+    flex-direction: column !important;
+    align-items: stretch !important;
+    padding: 14px !important;
+    gap: 12px !important;
+  }
+  .tabela-wrap > div[style*="display:flex"] > div:first-child { min-width: 0 !important; }
+  .tabela-wrap > div[style*="display:flex"] > div:nth-child(2) {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  /* Modais - fullscreen no mobile */
+  .modal-bg { padding: 0; }
+  .modal {
+    border-radius: 0;
+    max-width: 100%;
+    min-height: 100vh;
+    padding: 24px 20px;
+  }
+
+  /* Form em modais: grid de produto vira coluna */
+  .modal form > div[style*="grid-template-columns"] {
+    grid-template-columns: 1fr !important;
+  }
+
+  /* Pendente total */
+  .pendente-total {
+    padding: 14px;
+    gap: 10px;
+  }
+  .pendente-total svg { width: 24px; height: 24px; }
+  .pendente-total-valor { font-size: 22px; }
+
+  /* Buttons gerais */
+  .btn-block { padding: 13px 16px; }
+}
+
+/* ============================================================
+   RESPONSIVO - TABLET (769px a 1024px)
+   ============================================================ */
+@media (min-width: 769px) and (max-width: 1024px) {
+  .main { padding: 24px 18px; }
+  .grid-2 { grid-template-columns: 1fr; }
+}
+</style>
+</head>
+<body>
+
+<!-- ============================================================
+     ÁREA DA APP (renderizada via JS)
+     ============================================================ -->
+<div id="app"></div>
+
+
+<script>
+/* ============================================================
+   CONFIGURAÇÕES DO COLÉGIO CDA
+   ============================================================ */
+const CONFIG = {
+  // ============ COLE AQUI AS CREDENCIAIS DO SUPABASE ============
+  SUPABASE_URL: 'https://efldtpmjhcpcepqcaaru.supabase.co',
+  SUPABASE_ANON_KEY: 'sb_publishable_5Z1I1wDE-2u_TxNzE0BymA_qm0zyUJo',
+  // ==============================================================
+  PIX_CHAVE: 'danielascbueno@gmail.com',
+  PIX_NOME: 'Lanchonete CDA',
+  WHATSAPP_NUMERO: '556141024341',
+  // Senha admin agora é gerenciada no banco (tabela config). A inicial é 'cda2026'.
+  LOGO_BASE64: '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'
+};
+
+/* ============================================================
+   SUPABASE CLIENT
+   ============================================================ */
+let db = null;
+
+function inicializarSupabase() {
+  if (!CONFIG.SUPABASE_URL || CONFIG.SUPABASE_URL.startsWith('COLE_AQUI')) {
+    alert('⚠️ Sistema não configurado!\n\nAbra o arquivo HTML em um editor de texto e cole as credenciais do Supabase no início do arquivo (procure por "COLE_AQUI").');
+    return false;
+  }
+  try {
+    db = window.supabase.createClient(CONFIG.SUPABASE_URL, CONFIG.SUPABASE_ANON_KEY);
+    return true;
+  } catch (e) {
+    alert('Erro ao conectar ao banco de dados: ' + e.message);
+    return false;
+  }
+}
+
+/* ============================================================
+   CARDÁPIO PADRÃO INICIAL (usado se banco vier vazio - fallback)
+   ============================================================ */
+const CARDAPIO_PADRAO = [
+  { id: 'p1', nome: 'Pão de queijo', preco: 4.00, ativo: true, emoji: '🧀' },
+  { id: 'p2', nome: 'Coxinha', preco: 6.50, ativo: true, emoji: '🍗' },
+  { id: 'p3', nome: 'Empada de frango', preco: 5.50, ativo: true, emoji: '🥧' },
+  { id: 'p4', nome: 'Misto quente', preco: 7.00, ativo: true, emoji: '🥪' },
+  { id: 'p5', nome: 'Suco natural', preco: 5.00, ativo: true, emoji: '🥤' },
+  { id: 'p6', nome: 'Bolo de cenoura', preco: 4.50, ativo: true, emoji: '🍰' }
+];
+
+/* ============================================================
+   ESTADO GLOBAL
+   ============================================================ */
+const State = {
+  alunos: [],
+  produtos: [],
+  pedidos: [],
+  pais: [],
+  senhaAdminHash: null,
+  sessao: null,
+  tela: 'carregando',
+  modoLogin: 'pai',
+  abaPai: 'novoPedido',
+  abaAdmin: 'painel',
+  pedidoEtapa: 'aluno',
+  alunoSelecionadoId: null,
+  carrinho: {},
+  observacaoPedido: '',
+  metodoPagamento: 'pix',
+  pedidoFinalId: null,
+  filtroPagamentos: 'pendente',
+  periodoHistorico: '7',
+  buscaAlunosAdmin: '',
+  buscaPaisAdmin: '',
+  modalAberto: null,
+  carregando: false
+};
+
+/* ============================================================
+   API SUPABASE (substitui o localStorage)
+   ============================================================ */
+
+// Converte registro do banco (snake_case) para o formato que a UI espera (camelCase)
+function fromDBPai(p) {
+  return {
+    id: p.id, nome: p.nome, usuario: p.usuario, email: p.email,
+    telefone: p.telefone, senhaHash: p.senha_hash, criadoEm: p.criado_em
+  };
+}
+function fromDBAluno(a) {
+  return {
+    id: a.id, nome: a.nome, turma: a.turma,
+    responsavelId: a.responsavel_id, observacoesMedicas: a.observacoes_medicas,
+    criadoEm: a.criado_em
+  };
+}
+function fromDBProduto(p) {
+  return {
+    id: p.id, nome: p.nome, preco: parseFloat(p.preco),
+    emoji: p.emoji, ativo: p.ativo, criadoEm: p.criado_em
+  };
+}
+function fromDBPedido(p) {
+  return {
+    id: p.id, alunoId: p.aluno_id, paiId: p.pai_id, data: p.data,
+    itens: p.itens, total: parseFloat(p.total), observacao: p.observacao,
+    metodoPagamento: p.metodo_pagamento, statusPagamento: p.status_pagamento,
+    statusEntrega: p.status_entrega, criadoEm: p.criado_em
+  };
+}
+
+// Carrega TUDO do banco (chamado no startup e quando precisa atualizar)
+async function carregarTudo() {
+  if (!db) return;
+  try {
+    State.carregando = true;
+    const [paisRes, alunosRes, produtosRes, pedidosRes, configRes] = await Promise.all([
+      db.from('pais').select('*').order('nome'),
+      db.from('alunos').select('*').order('nome'),
+      db.from('produtos').select('*').order('criado_em'),
+      db.from('pedidos').select('*').order('criado_em', { ascending: false }),
+      db.from('config').select('*').eq('chave', 'senha_admin_hash').single()
+    ]);
+
+    if (paisRes.error) throw paisRes.error;
+    if (alunosRes.error) throw alunosRes.error;
+    if (produtosRes.error) throw produtosRes.error;
+    if (pedidosRes.error) throw pedidosRes.error;
+
+    State.pais = (paisRes.data || []).map(fromDBPai);
+    State.alunos = (alunosRes.data || []).map(fromDBAluno);
+    State.produtos = (produtosRes.data || []).map(fromDBProduto);
+    State.pedidos = (pedidosRes.data || []).map(fromDBPedido);
+    State.senhaAdminHash = configRes.data?.valor || hashSenha('cda2026');
+    State.carregando = false;
+  } catch (e) {
+    console.error('Erro ao carregar dados:', e);
+    State.carregando = false;
+    alert('Erro ao carregar dados do banco: ' + e.message);
+  }
+}
+
+// Configura listener em tempo real para sincronização entre dispositivos
+function ativarRealtime() {
+  if (!db) return;
+
+  ['pais', 'alunos', 'produtos', 'pedidos'].forEach(tabela => {
+    db.channel('public:' + tabela)
+      .on('postgres_changes', { event: '*', schema: 'public', table: tabela }, async () => {
+        await carregarTudo();
+        render();
+      })
+      .subscribe();
+  });
+}
+
+// API de gravação
+const API = {
+  async criarPai(p) {
+    const { data, error } = await db.from('pais').insert({
+      nome: p.nome, usuario: p.usuario, email: p.email || null,
+      telefone: p.telefone, senha_hash: p.senhaHash
+    }).select().single();
+    if (error) throw error;
+    return fromDBPai(data);
+  },
+  async atualizarPai(id, p) {
+    const update = { nome: p.nome, usuario: p.usuario, email: p.email || null, telefone: p.telefone };
+    if (p.senhaHash) update.senha_hash = p.senhaHash;
+    const { error } = await db.from('pais').update(update).eq('id', id);
+    if (error) throw error;
+  },
+  async excluirPai(id) {
+    const { error } = await db.from('pais').delete().eq('id', id);
+    if (error) throw error;
+  },
+  async criarAluno(a) {
+    const { data, error } = await db.from('alunos').insert({
+      nome: a.nome, turma: a.turma, responsavel_id: a.responsavelId,
+      observacoes_medicas: a.observacoesMedicas || null
+    }).select().single();
+    if (error) throw error;
+    return fromDBAluno(data);
+  },
+  async atualizarAluno(id, a) {
+    const { error } = await db.from('alunos').update({
+      nome: a.nome, turma: a.turma, responsavel_id: a.responsavelId,
+      observacoes_medicas: a.observacoesMedicas || null
+    }).eq('id', id);
+    if (error) throw error;
+  },
+  async excluirAluno(id) {
+    const { error } = await db.from('alunos').delete().eq('id', id);
+    if (error) throw error;
+  },
+  async criarProduto(p) {
+    const { data, error } = await db.from('produtos').insert({
+      nome: p.nome, preco: p.preco, emoji: p.emoji, ativo: p.ativo
+    }).select().single();
+    if (error) throw error;
+    return fromDBProduto(data);
+  },
+  async atualizarProduto(id, p) {
+    const { error } = await db.from('produtos').update({
+      nome: p.nome, preco: p.preco, emoji: p.emoji, ativo: p.ativo
+    }).eq('id', id);
+    if (error) throw error;
+  },
+  async excluirProduto(id) {
+    const { error } = await db.from('produtos').delete().eq('id', id);
+    if (error) throw error;
+  },
+  async criarPedido(p) {
+    const { data, error } = await db.from('pedidos').insert({
+      aluno_id: p.alunoId, pai_id: p.paiId, data: p.data,
+      itens: p.itens, total: p.total, observacao: p.observacao || null,
+      metodo_pagamento: p.metodoPagamento,
+      status_pagamento: p.statusPagamento, status_entrega: p.statusEntrega
+    }).select().single();
+    if (error) throw error;
+    return fromDBPedido(data);
+  },
+  async atualizarPedido(id, campos) {
+    const update = {};
+    if (campos.statusPagamento !== undefined) update.status_pagamento = campos.statusPagamento;
+    if (campos.statusEntrega !== undefined) update.status_entrega = campos.statusEntrega;
+    const { error } = await db.from('pedidos').update(update).eq('id', id);
+    if (error) throw error;
+  },
+  async atualizarSenhaAdmin(novoHash) {
+    const { error } = await db.from('config')
+      .upsert({ chave: 'senha_admin_hash', valor: novoHash, atualizado_em: new Date().toISOString() });
+    if (error) throw error;
+  }
+};
+
+
+/* ============================================================
+   HELPERS
+   ============================================================ */
+const HOJE = () => new Date().toISOString().split('T')[0];
+
+const formatBRL = v => new Intl.NumberFormat('pt-BR', {
+  style: 'currency', currency: 'BRL'
+}).format(v || 0);
+
+const formatData = iso => {
+  if (!iso) return '';
+  const [y,m,d] = iso.split('-');
+  return `${d}/${m}/${y}`;
+};
+
+const formatHora = iso => {
+  if (!iso) return '';
+  return new Date(iso).toLocaleTimeString('pt-BR', {hour:'2-digit', minute:'2-digit'});
+};
+
+// Hash bem simples (NÃO é seguro - use só como "ofuscação")
+function hashSenha(s) {
+  let h = 0;
+  for (let i=0; i<s.length; i++) {
+    h = (h<<5) - h + s.charCodeAt(i);
+    h |= 0;
+  }
+  return String(h);
+}
+
+function escapeHTML(s) {
+  if (s == null) return '';
+  return String(s)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+
+function gerarId(prefixo) {
+  return prefixo + '_' + Date.now() + '_' + Math.random().toString(36).slice(2,7);
+}
+
+function copiar(texto) {
+  navigator.clipboard?.writeText(texto).then(
+    () => mostrarToast('Copiado!'),
+    () => mostrarToast('Erro ao copiar')
+  );
+}
+
+function mostrarToast(msg) {
+  const t = document.createElement('div');
+  t.style.cssText = 'position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:#1c1917;color:white;padding:12px 20px;border-radius:12px;font-weight:600;z-index:1000;box-shadow:0 8px 24px rgba(0,0,0,0.2);animation:fadeIn 0.2s;';
+  t.textContent = msg;
+  document.body.appendChild(t);
+  setTimeout(() => t.remove(), 2000);
+}
+
+// Logo HTML
+function logoHTML(classe) {
+  return `<img src="data:image/jpeg;base64,${CONFIG.LOGO_BASE64}" class="logo ${classe || 'logo-md'}" alt="Logo CDA">`;
+}
+
+// Ícones SVG (Lucide-style)
+const Icons = {
+  arrowLeft: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m12 19-7-7 7-7"/><path d="M19 12H5"/></svg>',
+  plus: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="M12 5v14"/></svg>',
+  trash: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/></svg>',
+  check: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>',
+  checkCircle: '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>',
+  copy: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="14" height="14" x="8" y="8" rx="2" ry="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/></svg>',
+  whatsapp: '<svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 0 1-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 0 1-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 0 1 2.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0 0 12.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 0 0 5.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 0 0-3.48-8.413Z"/></svg>',
+  logout: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" x2="9" y1="12" y2="12"/></svg>',
+  search: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>',
+  alert: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" x2="12" y1="8" y2="12"/><line x1="12" x2="12.01" y1="16" y2="16"/></svg>',
+  shoppingBag: '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" x2="21" y1="6" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>',
+  sandwich: '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 11v3a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-3"/><path d="M12 19H4a2 2 0 0 1-2-2v-1a4 4 0 0 1 4-4h12a4 4 0 0 1 4 4v1a2 2 0 0 1-2 2h-3.83"/><path d="m3 11 7.77-6.04a2 2 0 0 1 2.46 0L21 11H3Z"/></svg>',
+  chefHat: '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 13.87A4 4 0 0 1 7.41 6a5.11 5.11 0 0 1 1.05-1.54 5 5 0 0 1 7.08 0A5.11 5.11 0 0 1 16.59 6 4 4 0 0 1 18 13.87V21H6Z"/><line x1="6" x2="18" y1="17" y2="17"/></svg>',
+  users: '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>',
+  creditCard: '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="20" height="14" x="2" y="5" rx="2"/><line x1="2" x2="22" y1="10" y2="10"/></svg>',
+  dollar: '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" x2="12" y1="2" y2="22"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>',
+  trending: '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 7 13.5 15.5 8.5 10.5 2 17"/><polyline points="16 7 22 7 22 13"/></svg>',
+  clock: '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>',
+  eye: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg>',
+  eyeOff: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9.88 9.88a3 3 0 1 0 4.24 4.24"/><path d="M10.73 5.08A10.43 10.43 0 0 1 12 5c7 0 10 7 10 7a13.16 13.16 0 0 1-1.67 2.68"/><path d="M6.61 6.61A13.526 13.526 0 0 0 2 12s3 7 10 7a9.74 9.74 0 0 0 5.39-1.61"/><line x1="2" x2="22" y1="2" y2="22"/></svg>',
+  lock: '<svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="11" x="3" y="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>',
+  user: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>',
+  school: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 22v-4a2 2 0 1 0-4 0v4"/><path d="m18 10 4 2v8a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2v-8l4-2"/><path d="M18 5v17"/><path d="m4 6 8-4 8 4"/><path d="M6 5v17"/><circle cx="12" cy="9" r="2"/></svg>'
+};
+
+/* ============================================================
+   ROTEAMENTO / RENDER PRINCIPAL
+   ============================================================ */
+function render() {
+  const app = document.getElementById('app');
+
+  if (!State.sessao) {
+    app.innerHTML = renderLogin();
+    bindLogin();
+    return;
+  }
+
+  if (State.sessao.tipo === 'pai') {
+    app.innerHTML = renderAppPai();
+    bindAppPai();
+  } else if (State.sessao.tipo === 'admin') {
+    app.innerHTML = renderAppAdmin();
+    bindAppAdmin();
+  }
+
+  if (State.modalAberto) {
+    document.body.insertAdjacentHTML('beforeend', State.modalAberto.html);
+    State.modalAberto.bind?.();
+  }
+}
+
+function fecharModal() {
+  document.querySelectorAll('.modal-bg').forEach(m => m.remove());
+  State.modalAberto = null;
+}
+
+/* ============================================================
+   TELA DE LOGIN
+   ============================================================ */
+function renderLogin() {
+  const isPai = State.modoLogin === 'pai';
+  return `
+    <div class="login-bg">
+      <div class="login-card ${isPai ? '' : 'modo-colegio'}">
+        <div class="login-logo-wrap">
+          ${logoHTML('logo-lg')}
+        </div>
+        <h1 class="login-titulo">Bem-vindo</h1>
+        <p class="login-subtitulo">Sistema da lanchonete · Colégio CDA</p>
+
+        <div class="switch-modo">
+          <button id="btn-modo-pai" class="${isPai ? 'ativo-pai' : ''}">
+            ${Icons.user} Responsável
+          </button>
+          <button id="btn-modo-colegio" class="${!isPai ? 'ativo-colegio' : ''}">
+            ${Icons.school} Colégio
+          </button>
+        </div>
+
+        <form id="form-login">
+          <div id="alerta-login"></div>
+
+          ${isPai ? `
+            <div class="form-group">
+              <label class="form-label">Usuário ou email</label>
+              <input type="text" class="form-input" id="login-email" placeholder="seu.usuario ou email@exemplo.com" autocomplete="username" required>
+            </div>
+          ` : ''}
+
+          <div class="form-group">
+            <label class="form-label">Senha</label>
+            <div class="input-senha-wrap">
+              <input type="password" class="form-input" id="login-senha" placeholder="${isPai ? 'Sua senha' : 'Senha de admin'}" autocomplete="current-password" required>
+              <button type="button" class="input-senha-toggle" id="toggle-senha">${Icons.eye}</button>
+            </div>
+          </div>
+
+          <button type="submit" class="btn ${isPai ? 'btn-primary' : 'btn-vermelho'} btn-block" style="margin-top: 8px;">
+            Entrar
+          </button>
+        </form>
+
+        ${isPai ? `
+          <p style="text-align:center;color:var(--pedra-500);font-size:13px;margin-top:18px;">
+            Não tem conta? Solicite ao colégio.
+          </p>
+        ` : ''}
+      </div>
+    </div>
+  `;
+}
+
+function bindLogin() {
+  document.getElementById('btn-modo-pai').onclick = () => {
+    State.modoLogin = 'pai';
+    render();
+  };
+  document.getElementById('btn-modo-colegio').onclick = () => {
+    State.modoLogin = 'colegio';
+    render();
+  };
+
+  // Toggle senha
+  document.getElementById('toggle-senha').onclick = () => {
+    const inp = document.getElementById('login-senha');
+    const btn = document.getElementById('toggle-senha');
+    if (inp.type === 'password') {
+      inp.type = 'text';
+      btn.innerHTML = Icons.eyeOff;
+    } else {
+      inp.type = 'password';
+      btn.innerHTML = Icons.eye;
+    }
+  };
+
+  document.getElementById('form-login').onsubmit = e => {
+    e.preventDefault();
+    const senha = document.getElementById('login-senha').value;
+    const alerta = document.getElementById('alerta-login');
+    alerta.innerHTML = '';
+
+    if (State.modoLogin === 'colegio') {
+      if (hashSenha(senha) === State.senhaAdminHash) {
+        State.sessao = { tipo: 'admin' };
+        State.tela = 'app';
+        render();
+      } else {
+        alerta.innerHTML = `<div class="alert alert-erro">${Icons.alert}<span>Senha incorreta.</span></div>`;
+      }
+    } else {
+      const loginInput = document.getElementById('login-email').value.trim().toLowerCase().replace(/\s+/g, '');
+      // Procura por usuário OU email
+      const pai = State.pais.find(p =>
+        (p.usuario && p.usuario === loginInput) ||
+        (p.email && p.email === loginInput)
+      );
+      if (!pai) {
+        alerta.innerHTML = `<div class="alert alert-erro">${Icons.alert}<span>Usuário ou email não cadastrado. Solicite ao colégio que crie seu acesso.</span></div>`;
+        return;
+      }
+      if (pai.senhaHash !== hashSenha(senha)) {
+        alerta.innerHTML = `<div class="alert alert-erro">${Icons.alert}<span>Senha incorreta.</span></div>`;
+        return;
+      }
+      State.sessao = { tipo: 'pai', userId: pai.id };
+      State.tela = 'app';
+      render();
+    }
+  };
+}
+
+function logout() {
+  State.sessao = null;
+  State.tela = 'login';
+  // Reset estado de telas
+  State.abaPai = 'novoPedido';
+  State.abaAdmin = 'painel';
+  State.pedidoEtapa = 'aluno';
+  State.alunoSelecionadoId = null;
+  State.carrinho = {};
+  State.observacaoPedido = '';
+  State.pedidoFinalId = null;
+  render();
+}
+</script>
+
+<script>
+/* ============================================================
+   APP DOS PAIS
+   ============================================================ */
+function renderAppPai() {
+  const pai = State.pais.find(p => p.id === State.sessao.userId);
+  if (!pai) { logout(); return ''; }
+
+  return `
+    <div class="app app-pais">
+      <header class="header">
+        <div class="header-inner">
+          <div class="flex items-center gap-3">
+            ${logoHTML('logo-sm')}
+            <div>
+              <div style="font-size:11px;color:var(--pedra-500);">Lanchonete</div>
+              <div class="serif" style="font-weight:800;color:var(--turquesa);font-size:16px;">Colégio CDA</div>
+            </div>
+          </div>
+          <div class="header-user">
+            <div class="header-user-info" style="display:none;">
+              <small>Olá,</small>
+              <strong>${escapeHTML(pai.nome.split(' ')[0])}</strong>
+            </div>
+            <button class="btn btn-ghost btn-sm" id="btn-logout-pai">
+              ${Icons.logout} <span class="hidden-sm">Sair</span>
+            </button>
+          </div>
+        </div>
+        <nav class="tabs">
+          <button class="tab ${State.abaPai === 'novoPedido' ? 'ativa' : ''}" data-aba="novoPedido">
+            ${Icons.plus} Novo pedido
+          </button>
+          <button class="tab ${State.abaPai === 'meusPedidos' ? 'ativa' : ''}" data-aba="meusPedidos">
+            ${Icons.shoppingBag} Meus pedidos
+          </button>
+          <button class="tab ${State.abaPai === 'meusFilhos' ? 'ativa' : ''}" data-aba="meusFilhos">
+            ${Icons.users} Meus filhos
+          </button>
+        </nav>
+      </header>
+      <main class="main main-pais">
+        ${renderConteudoPai(pai)}
+      </main>
+    </div>
+  `;
+}
+
+function bindAppPai() {
+  document.getElementById('btn-logout-pai').onclick = logout;
+  document.querySelectorAll('.tab').forEach(t => {
+    t.onclick = () => {
+      State.abaPai = t.dataset.aba;
+      // Reset wizard se voltar para novo pedido
+      if (State.abaPai === 'novoPedido') {
+        State.pedidoEtapa = 'aluno';
+        State.alunoSelecionadoId = null;
+        State.carrinho = {};
+        State.observacaoPedido = '';
+        State.pedidoFinalId = null;
+      }
+      render();
+    };
+  });
+
+  // Bind específico de cada aba
+  if (State.abaPai === 'novoPedido') bindNovoPedido();
+  if (State.abaPai === 'meusPedidos') bindMeusPedidos();
+}
+
+function renderConteudoPai(pai) {
+  const meusFilhos = State.alunos.filter(a => a.responsavelId === pai.id);
+
+  if (State.abaPai === 'novoPedido') {
+    return renderNovoPedido(pai, meusFilhos);
+  }
+  if (State.abaPai === 'meusPedidos') {
+    return renderMeusPedidos(pai, meusFilhos);
+  }
+  if (State.abaPai === 'meusFilhos') {
+    return renderMeusFilhos(pai, meusFilhos);
+  }
+  return '';
+}
+
+/* ----------- NOVO PEDIDO ----------- */
+function renderNovoPedido(pai, meusFilhos) {
+  if (meusFilhos.length === 0) {
+    return `
+      <div class="aviso">
+        ${Icons.alert}
+        <span>Você ainda não tem filhos cadastrados no sistema. Solicite ao colégio que cadastre seu(s) filho(s) para você poder fazer pedidos.</span>
+      </div>
+      <div class="empty">
+        <div class="empty-icon">${Icons.users}</div>
+        <p>Nenhum filho cadastrado.</p>
+      </div>
+    `;
+  }
+
+  const ordem = ['aluno', 'cardapio', 'pagamento', 'sucesso'];
+  const idxAtivo = ordem.indexOf(State.pedidoEtapa);
+
+  let html = `<div class="progresso">`;
+  ordem.forEach((_, i) => {
+    html += `<div class="progresso-step ${i <= idxAtivo ? 'ativa' : ''}"></div>`;
+  });
+  html += `</div>`;
+
+  if (State.pedidoEtapa === 'aluno') {
+    html += renderEtapaAluno(meusFilhos);
+  } else if (State.pedidoEtapa === 'cardapio') {
+    html += renderEtapaCardapio();
+  } else if (State.pedidoEtapa === 'pagamento') {
+    html += renderEtapaPagamento();
+  } else if (State.pedidoEtapa === 'sucesso') {
+    html += renderEtapaSucesso();
+  }
+
+  return html;
+}
+
+function renderEtapaAluno(meusFilhos) {
+  let html = `
+    <h1 class="page-titulo">Para quem é o lanche?</h1>
+    <p class="page-subtitulo">Escolha um dos seus filhos.</p>
+  `;
+  meusFilhos.forEach(a => {
+    html += `
+      <button class="aluno-btn" data-aluno="${a.id}">
+        <div class="aluno-avatar">${escapeHTML(a.nome.charAt(0).toUpperCase())}</div>
+        <div style="flex:1;">
+          <div class="aluno-nome">${escapeHTML(a.nome)}</div>
+          <div class="aluno-meta">Turma ${escapeHTML(a.turma)}</div>
+          ${a.observacoesMedicas ? `<div class="tag-medica">⚠️ ${escapeHTML(a.observacoesMedicas)}</div>` : ''}
+        </div>
+      </button>
+    `;
+  });
+  return html;
+}
+
+function renderEtapaCardapio() {
+  const aluno = State.alunos.find(a => a.id === State.alunoSelecionadoId);
+  if (!aluno) {
+    State.pedidoEtapa = 'aluno';
+    return '';
+  }
+  const produtosAtivos = State.produtos.filter(p => p.ativo);
+  const itensCarrinho = produtosAtivos.filter(p => State.carrinho[p.id] > 0);
+  const total = itensCarrinho.reduce((s,p) => s + p.preco * State.carrinho[p.id], 0);
+  const totalItens = itensCarrinho.reduce((s,p) => s + State.carrinho[p.id], 0);
+
+  let html = `
+    <button class="btn btn-ghost btn-sm" id="btn-trocar-aluno" style="margin-bottom:12px;">
+      ${Icons.arrowLeft} Trocar aluno
+    </button>
+    <div class="resumo-aluno">
+      <div class="resumo-aluno-label">Reservando para</div>
+      <div class="resumo-aluno-nome">${escapeHTML(aluno.nome)}</div>
+      <div style="font-size:13px;opacity:0.9;">Turma ${escapeHTML(aluno.turma)}</div>
+    </div>
+    <h1 class="page-titulo" style="font-size:28px;">Cardápio do recreio</h1>
+    <p class="page-subtitulo">Escolha o que vai na lancheira.</p>
+  `;
+
+  if (produtosAtivos.length === 0) {
+    html += `<div class="empty">A lanchonete ainda não cadastrou produtos.</div>`;
+  } else {
+    produtosAtivos.forEach(p => {
+      const qtd = State.carrinho[p.id] || 0;
+      html += `
+        <div class="produto-card">
+          <div class="produto-emoji">${p.emoji || '🍽️'}</div>
+          <div class="produto-info">
+            <div class="produto-nome">${escapeHTML(p.nome)}</div>
+            <div class="produto-preco">${formatBRL(p.preco)}</div>
+          </div>
+          ${qtd > 0 ? `
+            <div class="qtd-controls">
+              <button class="qtd-btn" data-action="remover" data-id="${p.id}">−</button>
+              <span class="qtd-num">${qtd}</span>
+              <button class="qtd-btn qtd-btn-add" data-action="adicionar" data-id="${p.id}">+</button>
+            </div>
+          ` : `
+            <button class="btn btn-primary btn-sm" data-action="adicionar" data-id="${p.id}">
+              Adicionar
+            </button>
+          `}
+        </div>
+      `;
+    });
+  }
+
+  if (totalItens > 0) {
+    html += `
+      <div class="cart-bar" id="ir-pagamento">
+        <span>${totalItens} ${totalItens === 1 ? 'item' : 'itens'} no carrinho</span>
+        <span class="cart-bar-total">${formatBRL(total)} →</span>
+      </div>
+    `;
+  }
+  return html;
+}
+
+function renderEtapaPagamento() {
+  const aluno = State.alunos.find(a => a.id === State.alunoSelecionadoId);
+  const produtosAtivos = State.produtos.filter(p => p.ativo);
+  const itensCarrinho = produtosAtivos.filter(p => State.carrinho[p.id] > 0);
+  const total = itensCarrinho.reduce((s,p) => s + p.preco * State.carrinho[p.id], 0);
+
+  let html = `
+    <button class="btn btn-ghost btn-sm" id="btn-voltar-cardapio" style="margin-bottom:12px;">
+      ${Icons.arrowLeft} Voltar ao cardápio
+    </button>
+    <h1 class="page-titulo">Confirme o pedido</h1>
+
+    <div class="card" style="margin-bottom:14px;">
+      <div style="font-size:11px;color:var(--pedra-500);text-transform:uppercase;letter-spacing:0.05em;font-weight:700;margin-bottom:6px;">Aluno</div>
+      <div style="font-weight:700;">${escapeHTML(aluno.nome)} · Turma ${escapeHTML(aluno.turma)}</div>
+      ${aluno.observacoesMedicas ? `<div class="tag-medica" style="display:block;margin-top:8px;padding:8px;">⚠️ ${escapeHTML(aluno.observacoesMedicas)}</div>` : ''}
+    </div>
+
+    <div class="card" style="margin-bottom:14px;">
+      <div style="font-size:11px;color:var(--pedra-500);text-transform:uppercase;letter-spacing:0.05em;font-weight:700;margin-bottom:10px;">Itens</div>
+  `;
+  itensCarrinho.forEach(p => {
+    html += `
+      <div class="item-row">
+        <span>${p.emoji || '🍽️'} ${escapeHTML(p.nome)} × ${State.carrinho[p.id]}</span>
+        <span style="font-weight:600;">${formatBRL(p.preco * State.carrinho[p.id])}</span>
+      </div>
+    `;
+  });
+  html += `
+      <div class="total-row">
+        <span>Total</span>
+        <span class="total-valor">${formatBRL(total)}</span>
+      </div>
+    </div>
+
+    <div class="card" style="margin-bottom:14px;">
+      <label class="form-label">Observação (opcional)</label>
+      <textarea class="form-textarea" id="input-observacao" placeholder="Ex: separar guardanapos, sem cebola...">${escapeHTML(State.observacaoPedido)}</textarea>
+    </div>
+
+    <div class="card" style="margin-bottom:18px;">
+      <div style="font-size:11px;color:var(--pedra-500);text-transform:uppercase;letter-spacing:0.05em;font-weight:700;margin-bottom:10px;">Forma de pagamento</div>
+      <div class="toggle-grupo">
+        <button class="toggle-opcao ${State.metodoPagamento === 'pix' ? 'ativo' : ''}" data-metodo="pix">PIX</button>
+        <button class="toggle-opcao ${State.metodoPagamento === 'dinheiro' ? 'ativo' : ''}" data-metodo="dinheiro">Dinheiro</button>
+      </div>
+    </div>
+
+    <button class="btn btn-vermelho btn-block" id="btn-confirmar-pedido">Confirmar reserva</button>
+  `;
+  return html;
+}
+
+function renderEtapaSucesso() {
+  const pedido = State.pedidos.find(p => p.id === State.pedidoFinalId);
+  if (!pedido) return '';
+  const aluno = State.alunos.find(a => a.id === pedido.alunoId);
+  const mensagem = mensagemWhatsApp(pedido, aluno);
+  const linkWA = `https://wa.me/${CONFIG.WHATSAPP_NUMERO}?text=${encodeURIComponent(mensagem)}`;
+
+  return `
+    <div class="sucesso-card">
+      <div class="sucesso-icon">${Icons.checkCircle}</div>
+      <h2 class="serif" style="font-size:28px;font-weight:800;margin-bottom:6px;">Reserva confirmada!</h2>
+      <p style="color:var(--pedra-600);">Lanche separado para <strong>${escapeHTML(aluno.nome)}</strong>.</p>
+      <p style="font-size:12px;color:var(--pedra-500);margin-top:10px;">Pedido #${pedido.id.slice(-6).toUpperCase()}</p>
+    </div>
+
+    ${pedido.metodoPagamento === 'pix' ? `
+      <div class="pix-card">
+        <div class="pix-label">Pagar via PIX</div>
+        <div class="pix-valor">${formatBRL(pedido.total)}</div>
+        <div class="pix-nome">${CONFIG.PIX_NOME}</div>
+        <div class="pix-chave-box">
+          <div class="pix-chave-label">Chave PIX (Email)</div>
+          <div class="pix-chave-valor">
+            <span style="word-break:break-all;">${CONFIG.PIX_CHAVE}</span>
+            <button class="pix-chave-copy" id="btn-copiar-pix" title="Copiar chave PIX">${Icons.copy}</button>
+          </div>
+        </div>
+        <p style="font-size:12px;opacity:0.9;">Após pagar, envie o comprovante via WhatsApp para confirmação.</p>
+      </div>
+    ` : `
+      <div style="background:var(--amarelo-claro);border:2px solid var(--amarelo);border-radius:18px;padding:20px;margin-bottom:14px;">
+        <div style="font-size:11px;text-transform:uppercase;letter-spacing:0.05em;font-weight:700;color:var(--vermelho-escuro);margin-bottom:6px;">Pagamento em dinheiro</div>
+        <div class="serif" style="font-size:30px;font-weight:800;color:#065f46;margin-bottom:8px;">${formatBRL(pedido.total)}</div>
+        <p style="font-size:14px;color:#92400e;">Avise a lanchonete pelo WhatsApp e o aluno deve levar o valor exato à lanchonete na hora de retirar o lanche.</p>
+      </div>
+    `}
+
+    <a href="${linkWA}" target="_blank" rel="noopener noreferrer" class="btn btn-whatsapp btn-block" style="margin-bottom:10px;">
+      ${Icons.whatsapp} Avisar a lanchonete pelo WhatsApp
+    </a>
+
+    <button class="btn btn-primary btn-block" id="btn-novo-pedido" style="margin-bottom:6px;">
+      Fazer novo pedido
+    </button>
+    <button class="btn btn-ghost btn-block" id="btn-ver-pedidos">
+      Ver meus pedidos
+    </button>
+  `;
+}
+
+function bindNovoPedido() {
+  // Etapa aluno
+  document.querySelectorAll('[data-aluno]').forEach(b => {
+    b.onclick = () => {
+      State.alunoSelecionadoId = b.dataset.aluno;
+      State.pedidoEtapa = 'cardapio';
+      State.carrinho = {};
+      render();
+    };
+  });
+
+  // Etapa cardápio
+  document.getElementById('btn-trocar-aluno')?.addEventListener('click', () => {
+    State.pedidoEtapa = 'aluno';
+    State.alunoSelecionadoId = null;
+    render();
+  });
+  document.querySelectorAll('[data-action="adicionar"]').forEach(b => {
+    b.onclick = () => {
+      const id = b.dataset.id;
+      State.carrinho[id] = (State.carrinho[id] || 0) + 1;
+      render();
+    };
+  });
+  document.querySelectorAll('[data-action="remover"]').forEach(b => {
+    b.onclick = () => {
+      const id = b.dataset.id;
+      if (State.carrinho[id] > 1) State.carrinho[id]--;
+      else delete State.carrinho[id];
+      render();
+    };
+  });
+  document.getElementById('ir-pagamento')?.addEventListener('click', () => {
+    State.pedidoEtapa = 'pagamento';
+    render();
+  });
+
+  // Etapa pagamento
+  document.getElementById('btn-voltar-cardapio')?.addEventListener('click', () => {
+    State.pedidoEtapa = 'cardapio';
+    render();
+  });
+  document.getElementById('input-observacao')?.addEventListener('input', e => {
+    State.observacaoPedido = e.target.value;
+  });
+  document.querySelectorAll('[data-metodo]').forEach(b => {
+    b.onclick = () => {
+      State.metodoPagamento = b.dataset.metodo;
+      render();
+    };
+  });
+  document.getElementById('btn-confirmar-pedido')?.addEventListener('click', () => {
+    const obs = document.getElementById('input-observacao')?.value || '';
+    State.observacaoPedido = obs;
+    finalizarPedido();
+  });
+
+  // Etapa sucesso
+  document.getElementById('btn-copiar-pix')?.addEventListener('click', () => {
+    copiar(CONFIG.PIX_CHAVE);
+  });
+  document.getElementById('btn-novo-pedido')?.addEventListener('click', () => {
+    State.pedidoEtapa = 'aluno';
+    State.alunoSelecionadoId = null;
+    State.carrinho = {};
+    State.observacaoPedido = '';
+    State.pedidoFinalId = null;
+    render();
+  });
+  document.getElementById('btn-ver-pedidos')?.addEventListener('click', () => {
+    State.abaPai = 'meusPedidos';
+    render();
+  });
+}
+
+async function finalizarPedido() {
+  const aluno = State.alunos.find(a => a.id === State.alunoSelecionadoId);
+  const produtosAtivos = State.produtos.filter(p => p.ativo);
+  const itensCarrinho = produtosAtivos.filter(p => State.carrinho[p.id] > 0);
+  const total = itensCarrinho.reduce((s,p) => s + p.preco * State.carrinho[p.id], 0);
+
+  const pedidoData = {
+    alunoId: aluno.id,
+    paiId: State.sessao.userId,
+    data: HOJE(),
+    itens: itensCarrinho.map(p => ({
+      produtoId: p.id,
+      nome: p.nome,
+      preco: p.preco,
+      emoji: p.emoji,
+      quantidade: State.carrinho[p.id]
+    })),
+    total,
+    observacao: State.observacaoPedido.trim(),
+    metodoPagamento: State.metodoPagamento,
+    statusPagamento: 'pendente',
+    statusEntrega: 'reservado'
+  };
+
+  try {
+    const pedido = await API.criarPedido(pedidoData);
+    State.pedidos.unshift(pedido);
+    State.pedidoFinalId = pedido.id;
+    State.pedidoEtapa = 'sucesso';
+    render();
+  } catch (e) {
+    alert('Erro ao salvar pedido: ' + e.message);
+  }
+}
+
+function mensagemWhatsApp(pedido, aluno) {
+  const itensTxt = pedido.itens
+    .map(i => `• ${i.nome} × ${i.quantidade} — ${formatBRL(i.preco * i.quantidade)}`)
+    .join('\n');
+  const obs = pedido.observacao ? `\n\n📝 Observação: ${pedido.observacao}` : '';
+  return `*🥪 Reserva de Lanche - CDA*
+
+👦 *Aluno:* ${aluno.nome}
+🎒 *Turma:* ${aluno.turma}
+📅 *Data:* ${formatData(pedido.data)}
+🆔 *Pedido:* #${pedido.id.slice(-6).toUpperCase()}
+
+*Itens:*
+${itensTxt}
+
+💰 *Total:* ${formatBRL(pedido.total)}
+💳 *Pagamento:* ${pedido.metodoPagamento === 'pix' ? 'PIX' : 'Dinheiro'}${pedido.metodoPagamento === 'pix' ? `\n🔑 *Chave:* ${CONFIG.PIX_CHAVE}` : ''}${obs}
+
+_Enviado via Sistema da Lanchonete CDA_`;
+}
+
+/* ----------- MEUS PEDIDOS ----------- */
+function renderMeusPedidos(pai, meusFilhos) {
+  const meusPedidos = State.pedidos
+    .filter(p => meusFilhos.some(f => f.id === p.alunoId))
+    .sort((a,b) => b.criadoEm.localeCompare(a.criadoEm));
+
+  if (meusPedidos.length === 0) {
+    return `
+      <h1 class="page-titulo">Meus pedidos</h1>
+      <p class="page-subtitulo">Histórico de reservas dos seus filhos.</p>
+      <div class="empty">
+        <div class="empty-icon">${Icons.shoppingBag}</div>
+        <p style="margin-bottom:14px;">Você ainda não fez nenhum pedido.</p>
+        <button class="btn btn-primary" id="btn-fazer-pedido">Fazer primeiro pedido</button>
+      </div>
+    `;
+  }
+
+  let html = `
+    <h1 class="page-titulo">Meus pedidos</h1>
+    <p class="page-subtitulo">Histórico de reservas dos seus filhos.</p>
+  `;
+
+  meusPedidos.forEach(p => {
+    const aluno = State.alunos.find(a => a.id === p.alunoId);
+    const mensagem = mensagemWhatsApp(p, aluno);
+    const linkWA = `https://wa.me/${CONFIG.WHATSAPP_NUMERO}?text=${encodeURIComponent(mensagem)}`;
+    const itensTxt = p.itens.map(i => `${i.emoji || '🍽️'} ${i.nome} ×${i.quantidade}`).join(' · ');
+
+    html += `
+      <div class="pedido-card">
+        <div class="pedido-header">
+          <div>
+            <div class="pedido-aluno-nome">${escapeHTML(aluno?.nome || 'Aluno')}</div>
+            <div class="pedido-meta">${formatData(p.data)} · ${formatHora(p.criadoEm)} · #${p.id.slice(-6).toUpperCase()}</div>
+          </div>
+          <div class="pedido-badges">
+            ${badgePagamento(p.statusPagamento)}
+            ${badgeEntrega(p.statusEntrega)}
+          </div>
+        </div>
+        <div class="pedido-itens">${itensTxt}</div>
+        <div class="pedido-footer">
+          <span style="font-weight:800;font-size:18px;color:var(--verde);">${formatBRL(p.total)}</span>
+          ${p.statusPagamento === 'pendente' && p.statusEntrega !== 'cancelado' ? `
+            <a href="${linkWA}" target="_blank" rel="noopener noreferrer" class="btn btn-whatsapp btn-sm">
+              ${Icons.whatsapp} Reenviar
+            </a>
+          ` : ''}
+        </div>
+      </div>
+    `;
+  });
+  return html;
+}
+
+function bindMeusPedidos() {
+  document.getElementById('btn-fazer-pedido')?.addEventListener('click', () => {
+    State.abaPai = 'novoPedido';
+    render();
+  });
+}
+
+/* ----------- MEUS FILHOS ----------- */
+function renderMeusFilhos(pai, meusFilhos) {
+  let html = `
+    <h1 class="page-titulo">Meus filhos</h1>
+    <p class="page-subtitulo">${meusFilhos.length} cadastrado(s) · O cadastro é feito pelo colégio.</p>
+  `;
+
+  if (meusFilhos.length === 0) {
+    html += `
+      <div class="aviso">
+        ${Icons.alert}
+        <span>Solicite ao colégio que cadastre seu(s) filho(s) no sistema.</span>
+      </div>
+    `;
+    return html;
+  }
+
+  meusFilhos.forEach(a => {
+    const pedidosAluno = State.pedidos.filter(p => p.alunoId === a.id && p.statusEntrega !== 'cancelado');
+    const totalGasto = pedidosAluno
+      .filter(p => p.statusPagamento === 'pago')
+      .reduce((s,p) => s + p.total, 0);
+    html += `
+      <div class="card" style="display:flex;align-items:center;gap:16px;margin-bottom:10px;">
+        <div class="aluno-avatar" style="width:56px;height:56px;font-size:22px;">${escapeHTML(a.nome.charAt(0).toUpperCase())}</div>
+        <div style="flex:1;">
+          <div style="font-weight:800;">${escapeHTML(a.nome)}</div>
+          <div style="font-size:13px;color:var(--pedra-500);">Turma ${escapeHTML(a.turma)}</div>
+          ${a.observacoesMedicas ? `<div class="tag-medica">⚠️ ${escapeHTML(a.observacoesMedicas)}</div>` : ''}
+        </div>
+        <div style="text-align:right;">
+          <div style="font-size:12px;color:var(--pedra-500);">${pedidosAluno.length} pedido(s)</div>
+          <div style="font-weight:800;color:var(--verde);">${formatBRL(totalGasto)}</div>
+        </div>
+      </div>
+    `;
+  });
+
+  return html;
+}
+
+function badgePagamento(status) {
+  const labels = { pendente: 'Pgto. pendente', pago: 'Pago' };
+  return `<span class="badge badge-${status}">${labels[status] || status}</span>`;
+}
+function badgeEntrega(status) {
+  const labels = { reservado: 'Reservado', entregue: 'Entregue', cancelado: 'Cancelado' };
+  return `<span class="badge badge-${status}">${labels[status] || status}</span>`;
+}
+</script>
+
+<script>
+/* ============================================================
+   APP DO ADMIN (LANCHONETE / COLÉGIO)
+   ============================================================ */
+function renderAppAdmin() {
+  return `
+    <div class="app">
+      <header class="header header-colegio">
+        <div class="header-inner">
+          <div class="flex items-center gap-3">
+            <div style="background:white;padding:6px;border-radius:10px;display:inline-flex;">
+              ${logoHTML('logo-sm')}
+            </div>
+            <div>
+              <div style="font-size:11px;opacity:0.8;">Colégio CDA</div>
+              <div class="serif" style="font-weight:800;font-size:16px;">Painel Administrativo</div>
+            </div>
+          </div>
+          <div class="header-user">
+            <small style="opacity:0.8;font-size:13px;">${formatData(HOJE())}</small>
+            <button class="btn btn-ghost btn-sm" id="btn-logout-admin" style="color:white;">
+              ${Icons.logout} Sair
+            </button>
+          </div>
+        </div>
+        <nav class="tabs">
+          <button class="tab ${State.abaAdmin === 'painel' ? 'ativa' : ''}" data-aba="painel">
+            ${Icons.chefHat} Produção do dia
+          </button>
+          <button class="tab ${State.abaAdmin === 'pagamentos' ? 'ativa' : ''}" data-aba="pagamentos">
+            ${Icons.creditCard} Pagamentos
+          </button>
+          <button class="tab ${State.abaAdmin === 'pais' ? 'ativa' : ''}" data-aba="pais">
+            ${Icons.user} Responsáveis
+          </button>
+          <button class="tab ${State.abaAdmin === 'alunos' ? 'ativa' : ''}" data-aba="alunos">
+            ${Icons.users} Alunos
+          </button>
+          <button class="tab ${State.abaAdmin === 'produtos' ? 'ativa' : ''}" data-aba="produtos">
+            ${Icons.sandwich} Cardápio
+          </button>
+          <button class="tab ${State.abaAdmin === 'historico' ? 'ativa' : ''}" data-aba="historico">
+            ${Icons.trending} Histórico
+          </button>
+        </nav>
+      </header>
+      <main class="main">
+        ${renderConteudoAdmin()}
+      </main>
+    </div>
+  `;
+}
+
+function bindAppAdmin() {
+  document.getElementById('btn-logout-admin').onclick = logout;
+  document.querySelectorAll('.tab').forEach(t => {
+    t.onclick = () => {
+      State.abaAdmin = t.dataset.aba;
+      render();
+    };
+  });
+
+  if (State.abaAdmin === 'painel') bindPainelProducao();
+  if (State.abaAdmin === 'pagamentos') bindPainelPagamentos();
+  if (State.abaAdmin === 'pais') bindPainelPais();
+  if (State.abaAdmin === 'alunos') bindPainelAlunos();
+  if (State.abaAdmin === 'produtos') bindPainelProdutos();
+  if (State.abaAdmin === 'historico') bindPainelHistorico();
+}
+
+function renderConteudoAdmin() {
+  switch (State.abaAdmin) {
+    case 'painel': return renderPainelProducao();
+    case 'pagamentos': return renderPainelPagamentos();
+    case 'pais': return renderPainelPais();
+    case 'alunos': return renderPainelAlunos();
+    case 'produtos': return renderPainelProdutos();
+    case 'historico': return renderPainelHistorico();
+    default: return '';
+  }
+}
+
+/* ----------- PAINEL: PRODUÇÃO DO DIA ----------- */
+function renderPainelProducao() {
+  const hoje = HOJE();
+  const pedidosHoje = State.pedidos.filter(p => p.data === hoje);
+  const pedidosValidos = pedidosHoje.filter(p => p.statusEntrega !== 'cancelado');
+
+  // Agregar produção
+  const producaoMap = {};
+  pedidosValidos.forEach(p => {
+    p.itens.forEach(i => {
+      if (!producaoMap[i.produtoId]) producaoMap[i.produtoId] = { ...i, quantidade: 0 };
+      producaoMap[i.produtoId].quantidade += i.quantidade;
+    });
+  });
+  const producao = Object.values(producaoMap).sort((a,b) => b.quantidade - a.quantidade);
+
+  const totalLanches = producao.reduce((s,p) => s + p.quantidade, 0);
+  const faturamento = pedidosValidos.reduce((s,p) => s + p.total, 0);
+  const pendentes = pedidosHoje.filter(p => p.statusPagamento === 'pendente' && p.statusEntrega !== 'cancelado').length;
+
+  let html = `
+    <h1 class="page-titulo">Produção de hoje</h1>
+    <p class="page-subtitulo">Tudo que precisa ser preparado para o recreio.</p>
+
+    <div class="card-info">
+      <div class="kpi kpi-verde">
+        ${kpiIcon(Icons.shoppingBag)}
+        <div class="kpi-label">Pedidos</div>
+        <div class="kpi-valor">${pedidosHoje.length}</div>
+      </div>
+      <div class="kpi kpi-amarelo">
+        ${kpiIcon(Icons.sandwich)}
+        <div class="kpi-label">Lanches a preparar</div>
+        <div class="kpi-valor">${totalLanches}</div>
+      </div>
+      <div class="kpi kpi-turquesa">
+        ${kpiIcon(Icons.dollar)}
+        <div class="kpi-label">Faturamento</div>
+        <div class="kpi-valor">${formatBRL(faturamento)}</div>
+      </div>
+      <div class="kpi kpi-vermelho">
+        ${kpiIcon(Icons.alert)}
+        <div class="kpi-label">Pgto. pendente</div>
+        <div class="kpi-valor">${pendentes}</div>
+      </div>
+    </div>
+
+    <div class="grid-2">
+      <div class="card">
+        <h2 style="font-size:18px;font-weight:800;margin-bottom:14px;display:flex;align-items:center;gap:8px;color:var(--turquesa);">
+          ${Icons.chefHat} Para preparar
+        </h2>
+  `;
+
+  if (producao.length === 0) {
+    html += `<p style="text-align:center;color:var(--pedra-500);padding:24px 0;">Nenhum pedido para hoje ainda.</p>`;
+  } else {
+    producao.forEach(p => {
+      html += `
+        <div style="display:flex;align-items:center;gap:14px;background:var(--pedra-50);padding:12px;border-radius:12px;margin-bottom:8px;">
+          <div style="font-size:30px;">${p.emoji || '🍽️'}</div>
+          <div style="flex:1;font-weight:700;">${escapeHTML(p.nome)}</div>
+          <div class="serif" style="font-size:30px;font-weight:800;color:var(--verde);">${p.quantidade}</div>
+        </div>
+      `;
+    });
+  }
+
+  html += `
+      </div>
+      <div class="card">
+        <h2 style="font-size:18px;font-weight:800;margin-bottom:14px;display:flex;align-items:center;gap:8px;color:var(--turquesa);">
+          ${Icons.users} Pedidos por aluno
+        </h2>
+        <div style="max-height:600px;overflow-y:auto;">
+  `;
+
+  if (pedidosHoje.length === 0) {
+    html += `<p style="text-align:center;color:var(--pedra-500);padding:24px 0;">Sem pedidos ainda.</p>`;
+  } else {
+    pedidosHoje.forEach(p => {
+      const aluno = State.alunos.find(a => a.id === p.alunoId);
+      const cls = p.statusEntrega === 'entregue' ? 'entregue' : (p.statusEntrega === 'cancelado' ? 'cancelado' : '');
+      html += `
+        <div class="pedido-card ${cls}">
+          <div class="pedido-header">
+            <div>
+              <div class="pedido-aluno-nome">${escapeHTML(aluno?.nome || '?')}</div>
+              <div class="pedido-meta">Turma ${escapeHTML(aluno?.turma || '—')} · ${formatHora(p.criadoEm)}</div>
+            </div>
+            <div class="pedido-badges">
+              ${badgePagamento(p.statusPagamento)}
+              ${badgeEntrega(p.statusEntrega)}
+            </div>
+          </div>
+          <div class="pedido-itens">
+            ${p.itens.map(i => `<div>${i.emoji || '🍽️'} ${escapeHTML(i.nome)} × ${i.quantidade}</div>`).join('')}
+          </div>
+          ${aluno?.observacoesMedicas ? `<div class="pedido-obs pedido-obs-medica">⚠️ ATENÇÃO MÉDICA: ${escapeHTML(aluno.observacoesMedicas)}</div>` : ''}
+          ${p.observacao ? `<div class="pedido-obs">📝 ${escapeHTML(p.observacao)}</div>` : ''}
+          <div class="pedido-footer">
+            <span style="font-weight:800;color:var(--verde);">${formatBRL(p.total)}</span>
+            ${p.statusEntrega === 'reservado' ? `
+              <div class="pedido-acoes">
+                <button class="btn btn-secondary btn-sm" data-cancelar="${p.id}">Cancelar</button>
+                <button class="btn btn-success btn-sm" data-entregar="${p.id}">${Icons.check} Entregue</button>
+              </div>
+            ` : ''}
+          </div>
+        </div>
+      `;
+    });
+  }
+
+  html += `
+        </div>
+      </div>
+    </div>
+  `;
+  return html;
+}
+
+function bindPainelProducao() {
+  document.querySelectorAll('[data-entregar]').forEach(b => {
+    b.onclick = async () => {
+      const id = b.dataset.entregar;
+      const pedido = State.pedidos.find(p => p.id === id);
+      try {
+        await API.atualizarPedido(id, { statusEntrega: 'entregue' });
+        pedido.statusEntrega = 'entregue';
+        render();
+      } catch (e) { alert('Erro: ' + e.message); }
+    };
+  });
+  document.querySelectorAll('[data-cancelar]').forEach(b => {
+    b.onclick = async () => {
+      if (!confirm('Cancelar este pedido?')) return;
+      const id = b.dataset.cancelar;
+      const pedido = State.pedidos.find(p => p.id === id);
+      try {
+        await API.atualizarPedido(id, { statusEntrega: 'cancelado' });
+        pedido.statusEntrega = 'cancelado';
+        render();
+      } catch (e) { alert('Erro: ' + e.message); }
+    };
+  });
+}
+
+function kpiIcon(svg) {
+  return `<div style="margin-bottom:8px;">${svg.replace('width="22"', 'width="22" style="opacity:0.85;"')}</div>`;
+}
+
+/* ----------- PAINEL: PAGAMENTOS ----------- */
+function renderPainelPagamentos() {
+  const filtro = State.filtroPagamentos;
+  const filtrados = State.pedidos
+    .filter(p => p.statusEntrega !== 'cancelado')
+    .filter(p => filtro === 'todos' ? true : p.statusPagamento === filtro)
+    .sort((a,b) => b.criadoEm.localeCompare(a.criadoEm));
+
+  const totalPendente = State.pedidos
+    .filter(p => p.statusPagamento === 'pendente' && p.statusEntrega !== 'cancelado')
+    .reduce((s,p) => s + p.total, 0);
+
+  let html = `
+    <h1 class="page-titulo">Pagamentos</h1>
+    <p class="page-subtitulo">Confirme PIX recebidos e dinheiro entregue.</p>
+
+    <div class="pendente-total">
+      ${Icons.alert}
+      <div>
+        <div class="pendente-total-label">Total pendente</div>
+        <div class="pendente-total-valor">${formatBRL(totalPendente)}</div>
+      </div>
+    </div>
+
+    <div class="filtros">
+      <button class="filtro-btn ${filtro === 'pendente' ? 'ativo' : ''}" data-filtro="pendente">Pendentes</button>
+      <button class="filtro-btn ${filtro === 'pago' ? 'ativo' : ''}" data-filtro="pago">Pagos</button>
+      <button class="filtro-btn ${filtro === 'todos' ? 'ativo' : ''}" data-filtro="todos">Todos</button>
+    </div>
+
+    <div class="tabela-wrap">
+  `;
+
+  if (filtrados.length === 0) {
+    html += `<p style="text-align:center;padding:40px;color:var(--pedra-500);">Nenhum pedido nessa categoria.</p>`;
+  } else {
+    filtrados.forEach(p => {
+      const aluno = State.alunos.find(a => a.id === p.alunoId);
+      html += `
+        <div style="padding:14px;border-bottom:1px solid var(--pedra-100);display:flex;align-items:center;gap:12px;flex-wrap:wrap;">
+          <div style="flex:1;min-width:180px;">
+            <div style="font-weight:700;">${escapeHTML(aluno?.nome || '?')}</div>
+            <div style="font-size:12px;color:var(--pedra-500);">${formatData(p.data)} · ${formatHora(p.criadoEm)} · #${p.id.slice(-6).toUpperCase()}</div>
+            <div style="font-size:12px;color:var(--pedra-500);margin-top:2px;">${p.itens.map(i => escapeHTML(i.nome)+'×'+i.quantidade).join(', ')}</div>
+          </div>
+          <div style="text-align:right;">
+            <div style="font-weight:800;color:var(--verde);">${formatBRL(p.total)}</div>
+            <div style="font-size:11px;color:var(--pedra-500);text-transform:uppercase;letter-spacing:0.05em;">${p.metodoPagamento}</div>
+          </div>
+          ${p.statusPagamento === 'pendente'
+            ? `<button class="btn btn-success btn-sm" data-confirmar="${p.id}">${Icons.check} Confirmar</button>`
+            : `<button class="btn btn-secondary btn-sm" data-desfazer="${p.id}">Desfazer</button>`
+          }
+        </div>
+      `;
+    });
+  }
+
+  html += `</div>`;
+  return html;
+}
+
+function bindPainelPagamentos() {
+  document.querySelectorAll('[data-filtro]').forEach(b => {
+    b.onclick = () => {
+      State.filtroPagamentos = b.dataset.filtro;
+      render();
+    };
+  });
+  document.querySelectorAll('[data-confirmar]').forEach(b => {
+    b.onclick = async () => {
+      const pedido = State.pedidos.find(p => p.id === b.dataset.confirmar);
+      try {
+        await API.atualizarPedido(pedido.id, { statusPagamento: 'pago' });
+        pedido.statusPagamento = 'pago';
+        render();
+      } catch (e) { alert('Erro: ' + e.message); }
+    };
+  });
+  document.querySelectorAll('[data-desfazer]').forEach(b => {
+    b.onclick = async () => {
+      const pedido = State.pedidos.find(p => p.id === b.dataset.desfazer);
+      try {
+        await API.atualizarPedido(pedido.id, { statusPagamento: 'pendente' });
+        pedido.statusPagamento = 'pendente';
+        render();
+      } catch (e) { alert('Erro: ' + e.message); }
+    };
+  });
+}
+
+/* ----------- PAINEL: RESPONSÁVEIS (PAIS) ----------- */
+function renderPainelPais() {
+  const busca = State.buscaPaisAdmin.toLowerCase();
+  const filtrados = State.pais.filter(p =>
+    p.nome.toLowerCase().includes(busca) ||
+    (p.usuario || '').toLowerCase().includes(busca) ||
+    (p.email || '').toLowerCase().includes(busca) ||
+    (p.telefone || '').includes(busca)
+  );
+
+  let html = `
+    <div style="display:flex;justify-content:space-between;align-items:flex-end;gap:16px;margin-bottom:24px;flex-wrap:wrap;">
+      <div>
+        <h1 class="page-titulo">Responsáveis</h1>
+        <p class="page-subtitulo" style="margin-bottom:0;">${State.pais.length} cadastrado(s) · Crie o login que será usado pelo pai/mãe.</p>
+      </div>
+      <button class="btn btn-primary" id="btn-novo-pai">${Icons.plus} Novo responsável</button>
+    </div>
+
+    <div class="search-box">
+      ${Icons.search}
+      <input type="text" class="form-input" id="busca-pais" placeholder="Buscar por nome, usuário, email ou telefone..." value="${escapeHTML(State.buscaPaisAdmin)}">
+    </div>
+
+    <div class="tabela-wrap">
+  `;
+
+  if (filtrados.length === 0) {
+    html += `<p style="text-align:center;padding:40px;color:var(--pedra-500);">${State.pais.length === 0 ? 'Nenhum responsável cadastrado.' : 'Nenhum resultado.'}</p>`;
+  } else {
+    html += `
+      <table class="tabela">
+        <thead>
+          <tr>
+            <th>Nome</th>
+            <th>Usuário (login)</th>
+            <th>Email</th>
+            <th>Telefone</th>
+            <th>Filhos</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody>
+    `;
+    filtrados.forEach(p => {
+      const numFilhos = State.alunos.filter(a => a.responsavelId === p.id).length;
+      // Se o cadastro for antigo (sem usuário), mostra o email como login
+      const loginExibir = p.usuario || p.email || '—';
+      html += `
+        <tr>
+          <td>
+            <div style="font-weight:700;">${escapeHTML(p.nome)}</div>
+          </td>
+          <td data-label="Usuário" style="font-family:monospace;font-size:13px;font-weight:700;color:var(--turquesa);">${escapeHTML(loginExibir)}</td>
+          <td data-label="Email" style="font-family:monospace;font-size:13px;">${escapeHTML(p.email || '—')}</td>
+          <td data-label="Telefone" style="font-size:13px;">${escapeHTML(p.telefone || '—')}</td>
+          <td data-label="Filhos" class="num">${numFilhos}</td>
+          <td class="text-right">
+            <button class="btn btn-secondary btn-sm" data-edit-pai="${p.id}">Editar</button>
+            <button class="btn btn-icon" style="color:var(--vermelho);" data-del-pai="${p.id}" title="Excluir">${Icons.trash}</button>
+          </td>
+        </tr>
+      `;
+    });
+    html += `</tbody></table>`;
+  }
+  html += `</div>`;
+  return html;
+}
+
+function bindPainelPais() {
+  document.getElementById('busca-pais')?.addEventListener('input', e => {
+    State.buscaPaisAdmin = e.target.value;
+    // Re-renderiza só essa parte
+    document.querySelector('.tabela-wrap').outerHTML = renderPainelPais().match(/<div class="tabela-wrap">[\s\S]*<\/div>/)[0];
+    bindPainelPais();
+  });
+
+  document.getElementById('btn-novo-pai')?.addEventListener('click', () => {
+    abrirModalPai(null);
+  });
+  document.querySelectorAll('[data-edit-pai]').forEach(b => {
+    b.onclick = () => {
+      const pai = State.pais.find(p => p.id === b.dataset.editPai);
+      abrirModalPai(pai);
+    };
+  });
+  document.querySelectorAll('[data-del-pai]').forEach(b => {
+    b.onclick = async () => {
+      const pai = State.pais.find(p => p.id === b.dataset.delPai);
+      const numFilhos = State.alunos.filter(a => a.responsavelId === pai.id).length;
+      const aviso = numFilhos > 0
+        ? `Esse responsável tem ${numFilhos} filho(s) cadastrado(s). Eles ficarão sem responsável vinculado. Continuar?`
+        : 'Excluir esse responsável?';
+      if (!confirm(aviso)) return;
+      try {
+        await API.excluirPai(pai.id);
+        State.pais = State.pais.filter(p => p.id !== pai.id);
+        render();
+      } catch (e) { alert('Erro: ' + e.message); }
+    };
+  });
+}
+
+function abrirModalPai(pai) {
+  const ehNovo = !pai;
+  const titulo = ehNovo ? 'Cadastrar responsável' : 'Editar responsável';
+
+  State.modalAberto = {
+    html: `
+      <div class="modal-bg" id="modal-bg">
+        <div class="modal" onclick="event.stopPropagation()">
+          <h2 class="modal-titulo">${titulo}</h2>
+          <p class="modal-subtitulo">Esses dados serão usados pelo responsável para fazer login.</p>
+          <form id="form-pai">
+            <div class="form-group">
+              <label class="form-label">Nome completo *</label>
+              <input type="text" class="form-input" id="pai-nome" value="${escapeHTML(pai?.nome || '')}" required>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Usuário (login) *</label>
+              <input type="text" class="form-input" id="pai-usuario" value="${escapeHTML(pai?.usuario || '')}" placeholder="Ex: maria.silva" required>
+              <small style="color:var(--pedra-500);font-size:12px;">Sem espaços. Será usado pelo responsável para entrar.</small>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Email (opcional, login alternativo)</label>
+              <input type="email" class="form-input" id="pai-email" value="${escapeHTML(pai?.email || '')}" placeholder="responsavel@email.com">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Telefone (WhatsApp)</label>
+              <input type="text" class="form-input" id="pai-telefone" value="${escapeHTML(pai?.telefone || '')}" placeholder="(61) 99999-9999">
+            </div>
+            <div class="form-group">
+              <label class="form-label">${ehNovo ? 'Senha *' : 'Nova senha (deixe vazio para manter)'}</label>
+              <input type="text" class="form-input" id="pai-senha" placeholder="${ehNovo ? 'Crie uma senha (mín. 4 caracteres)' : 'Deixe vazio para manter a atual'}">
+              <small style="color:var(--pedra-500);font-size:12px;">Anote o usuário e a senha para passar ao responsável.</small>
+            </div>
+            <div id="alerta-pai"></div>
+            <div class="modal-acoes">
+              <button type="button" class="btn btn-secondary" id="cancelar-pai">Cancelar</button>
+              <button type="submit" class="btn btn-primary">Salvar</button>
+            </div>
+          </form>
+        </div>
+      </div>
+    `,
+    bind: () => {
+      document.getElementById('modal-bg').onclick = fecharModal;
+      document.getElementById('cancelar-pai').onclick = fecharModal;
+      document.getElementById('form-pai').onsubmit = async e => {
+        e.preventDefault();
+        const nome = document.getElementById('pai-nome').value.trim();
+        const usuario = document.getElementById('pai-usuario').value.trim().toLowerCase().replace(/\s+/g, '');
+        const email = document.getElementById('pai-email').value.trim().toLowerCase();
+        const telefone = document.getElementById('pai-telefone').value.trim();
+        const senha = document.getElementById('pai-senha').value;
+        const alerta = document.getElementById('alerta-pai');
+        alerta.innerHTML = '';
+
+        if (!nome || !usuario) {
+          alerta.innerHTML = `<div class="alert alert-erro">${Icons.alert}<span>Preencha nome e usuário.</span></div>`;
+          return;
+        }
+        if (usuario.length < 3) {
+          alerta.innerHTML = `<div class="alert alert-erro">${Icons.alert}<span>Usuário precisa ter pelo menos 3 caracteres.</span></div>`;
+          return;
+        }
+        if (ehNovo && (!senha || senha.length < 4)) {
+          alerta.innerHTML = `<div class="alert alert-erro">${Icons.alert}<span>Crie uma senha com pelo menos 4 caracteres.</span></div>`;
+          return;
+        }
+        if (senha && senha.length < 4) {
+          alerta.innerHTML = `<div class="alert alert-erro">${Icons.alert}<span>A senha precisa ter pelo menos 4 caracteres.</span></div>`;
+          return;
+        }
+        const usuarioEmUso = State.pais.find(p => p.usuario === usuario && p.id !== pai?.id);
+        if (usuarioEmUso) {
+          alerta.innerHTML = `<div class="alert alert-erro">${Icons.alert}<span>Esse usuário já está em uso. Escolha outro.</span></div>`;
+          return;
+        }
+        if (email) {
+          const emailEmUso = State.pais.find(p => p.email === email && p.id !== pai?.id);
+          if (emailEmUso) {
+            alerta.innerHTML = `<div class="alert alert-erro">${Icons.alert}<span>Esse email já está em uso por outro responsável.</span></div>`;
+            return;
+          }
+        }
+
+        try {
+          if (ehNovo) {
+            const novoPai = await API.criarPai({
+              nome, usuario, email, telefone,
+              senhaHash: hashSenha(senha)
+            });
+            State.pais.push(novoPai);
+          } else {
+            await API.atualizarPai(pai.id, {
+              nome, usuario, email, telefone,
+              senhaHash: senha ? hashSenha(senha) : null
+            });
+            pai.nome = nome;
+            pai.usuario = usuario;
+            pai.email = email;
+            pai.telefone = telefone;
+            if (senha) pai.senhaHash = hashSenha(senha);
+          }
+          fecharModal();
+          render();
+          mostrarToast(ehNovo ? 'Responsável cadastrado!' : 'Atualizado!');
+        } catch (e) {
+          alerta.innerHTML = `<div class="alert alert-erro">${Icons.alert}<span>Erro: ${escapeHTML(e.message)}</span></div>`;
+        }
+      };
+    }
+  };
+  render();
+}
+
+/* ----------- PAINEL: ALUNOS ----------- */
+function renderPainelAlunos() {
+  const busca = State.buscaAlunosAdmin.toLowerCase();
+  const filtrados = State.alunos.filter(a =>
+    a.nome.toLowerCase().includes(busca) ||
+    a.turma.toLowerCase().includes(busca)
+  );
+
+  const nomeResp = id => State.pais.find(p => p.id === id)?.nome || '—';
+  const totalPedidos = id => State.pedidos.filter(p => p.alunoId === id && p.statusEntrega !== 'cancelado').length;
+  const totalGasto = id => State.pedidos
+    .filter(p => p.alunoId === id && p.statusPagamento === 'pago' && p.statusEntrega !== 'cancelado')
+    .reduce((s,p) => s + p.total, 0);
+
+  let html = `
+    <div style="display:flex;justify-content:space-between;align-items:flex-end;gap:16px;margin-bottom:24px;flex-wrap:wrap;">
+      <div>
+        <h1 class="page-titulo">Alunos</h1>
+        <p class="page-subtitulo" style="margin-bottom:0;">${State.alunos.length} cadastrado(s) · Vincule cada aluno a um responsável.</p>
+      </div>
+      <button class="btn btn-primary" id="btn-novo-aluno">${Icons.plus} Novo aluno</button>
+    </div>
+
+    <div class="search-box">
+      ${Icons.search}
+      <input type="text" class="form-input" id="busca-alunos" placeholder="Buscar por nome ou turma..." value="${escapeHTML(State.buscaAlunosAdmin)}">
+    </div>
+
+    <div class="tabela-wrap">
+  `;
+
+  if (filtrados.length === 0) {
+    html += `<p style="text-align:center;padding:40px;color:var(--pedra-500);">${State.alunos.length === 0 ? 'Nenhum aluno cadastrado.' : 'Nenhum resultado.'}</p>`;
+  } else {
+    html += `
+      <table class="tabela">
+        <thead>
+          <tr>
+            <th>Aluno</th>
+            <th>Turma</th>
+            <th>Responsável</th>
+            <th class="text-right">Pedidos</th>
+            <th class="text-right">Total pago</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody>
+    `;
+    filtrados.forEach(a => {
+      html += `
+        <tr>
+          <td>
+            <div style="font-weight:700;">${escapeHTML(a.nome)}</div>
+            ${a.observacoesMedicas ? `<div class="tag-medica">⚠️ ${escapeHTML(a.observacoesMedicas)}</div>` : ''}
+          </td>
+          <td data-label="Turma">${escapeHTML(a.turma)}</td>
+          <td data-label="Responsável" style="font-size:13px;">${escapeHTML(nomeResp(a.responsavelId))}</td>
+          <td data-label="Pedidos" class="text-right num">${totalPedidos(a.id)}</td>
+          <td data-label="Total pago" class="text-right vermelho">${formatBRL(totalGasto(a.id))}</td>
+          <td class="text-right">
+            <button class="btn btn-secondary btn-sm" data-edit-aluno="${a.id}">Editar</button>
+            <button class="btn btn-icon" style="color:var(--vermelho);" data-del-aluno="${a.id}" title="Excluir">${Icons.trash}</button>
+          </td>
+        </tr>
+      `;
+    });
+    html += `</tbody></table>`;
+  }
+  html += `</div>`;
+  return html;
+}
+
+function bindPainelAlunos() {
+  document.getElementById('busca-alunos')?.addEventListener('input', e => {
+    State.buscaAlunosAdmin = e.target.value;
+    document.querySelector('.tabela-wrap').outerHTML = renderPainelAlunos().match(/<div class="tabela-wrap">[\s\S]*<\/div>/)[0];
+    bindPainelAlunos();
+  });
+
+  document.getElementById('btn-novo-aluno')?.addEventListener('click', () => {
+    if (State.pais.length === 0) {
+      alert('Cadastre primeiro pelo menos um responsável na aba "Responsáveis".');
+      return;
+    }
+    abrirModalAluno(null);
+  });
+  document.querySelectorAll('[data-edit-aluno]').forEach(b => {
+    b.onclick = () => abrirModalAluno(State.alunos.find(a => a.id === b.dataset.editAluno));
+  });
+  document.querySelectorAll('[data-del-aluno]').forEach(b => {
+    b.onclick = async () => {
+      if (!confirm('Excluir esse aluno? Os pedidos antigos não serão removidos.')) return;
+      try {
+        await API.excluirAluno(b.dataset.delAluno);
+        State.alunos = State.alunos.filter(a => a.id !== b.dataset.delAluno);
+        render();
+      } catch (e) { alert('Erro: ' + e.message); }
+    };
+  });
+}
+
+function abrirModalAluno(aluno) {
+  const ehNovo = !aluno;
+
+  State.modalAberto = {
+    html: `
+      <div class="modal-bg" id="modal-bg">
+        <div class="modal" onclick="event.stopPropagation()">
+          <h2 class="modal-titulo">${ehNovo ? 'Cadastrar aluno' : 'Editar aluno'}</h2>
+          <p class="modal-subtitulo">Vincule o aluno ao responsável que vai fazer os pedidos.</p>
+          <form id="form-aluno">
+            <div class="form-group">
+              <label class="form-label">Nome do aluno *</label>
+              <input type="text" class="form-input" id="aluno-nome" value="${escapeHTML(aluno?.nome || '')}" required>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Turma *</label>
+              <input type="text" class="form-input" id="aluno-turma" value="${escapeHTML(aluno?.turma || '')}" placeholder="Ex: 5º A" required>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Responsável *</label>
+              <select class="form-select" id="aluno-resp" required>
+                <option value="">Selecione...</option>
+                ${State.pais.map(p => `<option value="${p.id}" ${p.id === aluno?.responsavelId ? 'selected' : ''}>${escapeHTML(p.nome)} (${escapeHTML(p.usuario || p.email || 'sem login')})</option>`).join('')}
+              </select>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Observações médicas (alergias, restrições)</label>
+              <textarea class="form-textarea" id="aluno-obs">${escapeHTML(aluno?.observacoesMedicas || '')}</textarea>
+              <small style="color:var(--pedra-500);font-size:12px;">Aparecerá em destaque no painel da lanchonete.</small>
+            </div>
+            <div id="alerta-aluno"></div>
+            <div class="modal-acoes">
+              <button type="button" class="btn btn-secondary" id="cancelar-aluno">Cancelar</button>
+              <button type="submit" class="btn btn-primary">Salvar</button>
+            </div>
+          </form>
+        </div>
+      </div>
+    `,
+    bind: () => {
+      document.getElementById('modal-bg').onclick = fecharModal;
+      document.getElementById('cancelar-aluno').onclick = fecharModal;
+      document.getElementById('form-aluno').onsubmit = async e => {
+        e.preventDefault();
+        const nome = document.getElementById('aluno-nome').value.trim();
+        const turma = document.getElementById('aluno-turma').value.trim();
+        const respId = document.getElementById('aluno-resp').value;
+        const obs = document.getElementById('aluno-obs').value.trim();
+        const alerta = document.getElementById('alerta-aluno');
+        alerta.innerHTML = '';
+
+        if (!nome || !turma || !respId) {
+          alerta.innerHTML = `<div class="alert alert-erro">${Icons.alert}<span>Preencha todos os campos obrigatórios.</span></div>`;
+          return;
+        }
+
+        try {
+          if (ehNovo) {
+            const novoAluno = await API.criarAluno({
+              nome, turma, responsavelId: respId, observacoesMedicas: obs
+            });
+            State.alunos.push(novoAluno);
+          } else {
+            await API.atualizarAluno(aluno.id, {
+              nome, turma, responsavelId: respId, observacoesMedicas: obs
+            });
+            aluno.nome = nome;
+            aluno.turma = turma;
+            aluno.responsavelId = respId;
+            aluno.observacoesMedicas = obs;
+          }
+          fecharModal();
+          render();
+          mostrarToast(ehNovo ? 'Aluno cadastrado!' : 'Atualizado!');
+        } catch (e) {
+          alerta.innerHTML = `<div class="alert alert-erro">${Icons.alert}<span>Erro: ${escapeHTML(e.message)}</span></div>`;
+        }
+      };
+    }
+  };
+  render();
+}
+
+/* ----------- PAINEL: PRODUTOS ----------- */
+function renderPainelProdutos() {
+  let html = `
+    <div style="display:flex;justify-content:space-between;align-items:flex-end;gap:16px;margin-bottom:24px;flex-wrap:wrap;">
+      <div>
+        <h1 class="page-titulo">Cardápio</h1>
+        <p class="page-subtitulo" style="margin-bottom:0;">Produtos disponíveis para reserva.</p>
+      </div>
+      <button class="btn btn-primary" id="btn-novo-produto">${Icons.plus} Novo produto</button>
+    </div>
+
+    <div class="grid-3">
+  `;
+
+  State.produtos.forEach(p => {
+    html += `
+      <div class="card" style="${p.ativo ? '' : 'opacity:0.55;'}">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:12px;">
+          <div style="font-size:46px;">${p.emoji || '🍽️'}</div>
+          <button class="badge ${p.ativo ? 'badge-pago' : 'badge-entregue'}" data-toggle-produto="${p.id}" style="border:none;cursor:pointer;">
+            ${p.ativo ? 'Ativo' : 'Pausado'}
+          </button>
+        </div>
+        <div style="font-weight:700;font-size:18px;">${escapeHTML(p.nome)}</div>
+        <div class="serif" style="font-size:24px;font-weight:800;color:var(--verde);margin-bottom:12px;">${formatBRL(p.preco)}</div>
+        <div style="display:flex;gap:6px;">
+          <button class="btn btn-secondary btn-sm" style="flex:1;" data-edit-produto="${p.id}">Editar</button>
+          <button class="btn btn-icon" style="color:var(--vermelho);" data-del-produto="${p.id}">${Icons.trash}</button>
+        </div>
+      </div>
+    `;
+  });
+
+  html += `</div>`;
+  return html;
+}
+
+function bindPainelProdutos() {
+  document.getElementById('btn-novo-produto')?.addEventListener('click', () => abrirModalProduto(null));
+  document.querySelectorAll('[data-edit-produto]').forEach(b => {
+    b.onclick = () => abrirModalProduto(State.produtos.find(p => p.id === b.dataset.editProduto));
+  });
+  document.querySelectorAll('[data-toggle-produto]').forEach(b => {
+    b.onclick = async () => {
+      const p = State.produtos.find(x => x.id === b.dataset.toggleProduto);
+      try {
+        await API.atualizarProduto(p.id, { ...p, ativo: !p.ativo });
+        p.ativo = !p.ativo;
+        render();
+      } catch (e) { alert('Erro: ' + e.message); }
+    };
+  });
+  document.querySelectorAll('[data-del-produto]').forEach(b => {
+    b.onclick = async () => {
+      if (!confirm('Excluir esse produto?')) return;
+      try {
+        await API.excluirProduto(b.dataset.delProduto);
+        State.produtos = State.produtos.filter(p => p.id !== b.dataset.delProduto);
+        render();
+      } catch (e) { alert('Erro: ' + e.message); }
+    };
+  });
+}
+
+function abrirModalProduto(prod) {
+  const ehNovo = !prod;
+  State.modalAberto = {
+    html: `
+      <div class="modal-bg" id="modal-bg">
+        <div class="modal" onclick="event.stopPropagation()">
+          <h2 class="modal-titulo">${ehNovo ? 'Novo produto' : 'Editar produto'}</h2>
+          <form id="form-produto">
+            <div style="display:grid;grid-template-columns:80px 1fr 120px;gap:10px;">
+              <div class="form-group">
+                <label class="form-label">Emoji</label>
+                <input type="text" class="form-input" id="prod-emoji" value="${escapeHTML(prod?.emoji || '🍽️')}">
+              </div>
+              <div class="form-group">
+                <label class="form-label">Nome *</label>
+                <input type="text" class="form-input" id="prod-nome" value="${escapeHTML(prod?.nome || '')}" required>
+              </div>
+              <div class="form-group">
+                <label class="form-label">Preço *</label>
+                <input type="text" class="form-input" id="prod-preco" value="${prod?.preco || ''}" placeholder="5,50" required>
+              </div>
+            </div>
+            <label class="flex items-center gap-2" style="font-size:14px;margin-top:8px;">
+              <input type="checkbox" id="prod-ativo" ${(prod?.ativo ?? true) ? 'checked' : ''} style="width:16px;height:16px;accent-color:var(--turquesa);">
+              Disponível para venda
+            </label>
+            <div id="alerta-produto"></div>
+            <div class="modal-acoes">
+              <button type="button" class="btn btn-secondary" id="cancelar-produto">Cancelar</button>
+              <button type="submit" class="btn btn-primary">Salvar</button>
+            </div>
+          </form>
+        </div>
+      </div>
+    `,
+    bind: () => {
+      document.getElementById('modal-bg').onclick = fecharModal;
+      document.getElementById('cancelar-produto').onclick = fecharModal;
+      document.getElementById('form-produto').onsubmit = async e => {
+        e.preventDefault();
+        const nome = document.getElementById('prod-nome').value.trim();
+        const emoji = document.getElementById('prod-emoji').value.trim() || '🍽️';
+        const precoStr = document.getElementById('prod-preco').value.replace(',', '.');
+        const preco = parseFloat(precoStr);
+        const ativo = document.getElementById('prod-ativo').checked;
+        const alerta = document.getElementById('alerta-produto');
+        alerta.innerHTML = '';
+
+        if (!nome || isNaN(preco) || preco <= 0) {
+          alerta.innerHTML = `<div class="alert alert-erro">${Icons.alert}<span>Preencha nome e preço válido.</span></div>`;
+          return;
+        }
+
+        try {
+          if (ehNovo) {
+            const novoProd = await API.criarProduto({ nome, emoji, preco, ativo });
+            State.produtos.push(novoProd);
+          } else {
+            await API.atualizarProduto(prod.id, { nome, emoji, preco, ativo });
+            prod.nome = nome; prod.emoji = emoji; prod.preco = preco; prod.ativo = ativo;
+          }
+          fecharModal();
+          render();
+          mostrarToast(ehNovo ? 'Produto cadastrado!' : 'Atualizado!');
+        } catch (e) {
+          alerta.innerHTML = `<div class="alert alert-erro">${Icons.alert}<span>Erro: ${escapeHTML(e.message)}</span></div>`;
+        }
+      };
+    }
+  };
+  render();
+}
+
+/* ----------- PAINEL: HISTÓRICO ----------- */
+function renderPainelHistorico() {
+  const dias = parseInt(State.periodoHistorico, 10);
+  const limite = new Date();
+  limite.setDate(limite.getDate() - dias);
+  const limiteISO = limite.toISOString().split('T')[0];
+
+  const pedidosPeriodo = State.pedidos
+    .filter(p => p.data >= limiteISO && p.statusEntrega !== 'cancelado')
+    .sort((a,b) => b.criadoEm.localeCompare(a.criadoEm));
+
+  const totalReceita = pedidosPeriodo.filter(p => p.statusPagamento === 'pago').reduce((s,p) => s + p.total, 0);
+  const totalAReceber = pedidosPeriodo.filter(p => p.statusPagamento === 'pendente').reduce((s,p) => s + p.total, 0);
+
+  // Itens vendidos
+  const map = {};
+  pedidosPeriodo.forEach(p => {
+    p.itens.forEach(i => {
+      if (!map[i.produtoId]) map[i.produtoId] = { ...i, quantidade: 0, faturamento: 0 };
+      map[i.produtoId].quantidade += i.quantidade;
+      map[i.produtoId].faturamento += i.preco * i.quantidade;
+    });
+  });
+  const itensVendidos = Object.values(map).sort((a,b) => b.quantidade - a.quantidade);
+
+  let html = `
+    <h1 class="page-titulo">Histórico</h1>
+    <p class="page-subtitulo">Resumo de vendas e produtos mais pedidos.</p>
+
+    <div class="filtros">
+      <button class="filtro-btn ${State.periodoHistorico === '1' ? 'ativo' : ''}" data-periodo="1">Hoje</button>
+      <button class="filtro-btn ${State.periodoHistorico === '7' ? 'ativo' : ''}" data-periodo="7">7 dias</button>
+      <button class="filtro-btn ${State.periodoHistorico === '30' ? 'ativo' : ''}" data-periodo="30">30 dias</button>
+      <button class="filtro-btn ${State.periodoHistorico === '365' ? 'ativo' : ''}" data-periodo="365">1 ano</button>
+    </div>
+
+    <div class="card-info" style="grid-template-columns:1fr 1fr 1fr;">
+      <div class="kpi kpi-verde">
+        ${kpiIcon(Icons.shoppingBag)}
+        <div class="kpi-label">Pedidos</div>
+        <div class="kpi-valor">${pedidosPeriodo.length}</div>
+      </div>
+      <div class="kpi kpi-turquesa">
+        ${kpiIcon(Icons.checkCircle)}
+        <div class="kpi-label">Receita realizada</div>
+        <div class="kpi-valor">${formatBRL(totalReceita)}</div>
+      </div>
+      <div class="kpi kpi-vermelho">
+        ${kpiIcon(Icons.clock)}
+        <div class="kpi-label">A receber</div>
+        <div class="kpi-valor">${formatBRL(totalAReceber)}</div>
+      </div>
+    </div>
+
+    <div class="grid-2">
+      <div class="card">
+        <h2 style="font-size:18px;font-weight:800;margin-bottom:14px;">Mais vendidos</h2>
+  `;
+
+  if (itensVendidos.length === 0) {
+    html += `<p style="text-align:center;color:var(--pedra-500);padding:24px 0;">Sem dados no período.</p>`;
+  } else {
+    const max = itensVendidos[0].quantidade;
+    itensVendidos.forEach((p, i) => {
+      const pct = (p.quantidade / max) * 100;
+      html += `
+        <div class="barra-item">
+          <div class="barra-info">
+            <strong>${i+1}. ${p.emoji || '🍽️'} ${escapeHTML(p.nome)}</strong>
+            <span>${p.quantidade} · <strong style="color:var(--verde);">${formatBRL(p.faturamento)}</strong></span>
+          </div>
+          <div class="barra-bar"><div class="barra-fill" style="width:${pct}%"></div></div>
+        </div>
+      `;
+    });
+  }
+
+  html += `
+      </div>
+      <div class="card">
+        <h2 style="font-size:18px;font-weight:800;margin-bottom:14px;">Últimos pedidos</h2>
+        <div style="max-height:500px;overflow-y:auto;">
+  `;
+
+  if (pedidosPeriodo.length === 0) {
+    html += `<p style="text-align:center;color:var(--pedra-500);padding:24px 0;">Nada por aqui.</p>`;
+  } else {
+    pedidosPeriodo.slice(0, 30).forEach(p => {
+      const aluno = State.alunos.find(a => a.id === p.alunoId);
+      html += `
+        <div style="padding:12px;background:var(--pedra-50);border-radius:12px;display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+          <div>
+            <div style="font-weight:600;font-size:14px;">${escapeHTML(aluno?.nome || '?')}</div>
+            <div style="font-size:12px;color:var(--pedra-500);">${formatData(p.data)} · ${p.itens.length} item(s)</div>
+          </div>
+          <div style="text-align:right;">
+            <div style="font-weight:800;color:var(--verde);">${formatBRL(p.total)}</div>
+            ${badgePagamento(p.statusPagamento)}
+          </div>
+        </div>
+      `;
+    });
+  }
+
+  html += `</div></div></div>`;
+  return html;
+}
+
+function bindPainelHistorico() {
+  document.querySelectorAll('[data-periodo]').forEach(b => {
+    b.onclick = () => {
+      State.periodoHistorico = b.dataset.periodo;
+      render();
+    };
+  });
+}
+
+/* ============================================================
+   INICIALIZAÇÃO
+   ============================================================ */
+document.addEventListener('DOMContentLoaded', async () => {
+  // Mostra tela de carregando
+  document.getElementById('app').innerHTML = `
+    <div style="min-height:100vh;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:16px;background:linear-gradient(180deg, #E8F7F9 0%, #ffffff 100%);">
+      <img src="data:image/jpeg;base64,${CONFIG.LOGO_BASE64}" style="height:90px;" alt="CDA">
+      <div style="font-family:'Fraunces',serif;color:#26B7C9;font-size:22px;font-weight:700;">Carregando...</div>
+    </div>
+  `;
+
+  if (!inicializarSupabase()) return;
+  await carregarTudo();
+  ativarRealtime();
+  State.tela = 'login';
+  render();
+});
+</script>
+
+</body>
+</html>
