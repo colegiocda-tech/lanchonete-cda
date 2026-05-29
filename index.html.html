@@ -2434,7 +2434,7 @@ _Enviado via Sistema da Lanchonete CDA_`;
 /* ----------- MEUS PEDIDOS ----------- */
 function renderMeusPedidos(pai, meusFilhos) {
   const meusPedidos = State.pedidos
-    .filter(p => meusFilhos.some(f => f.id === p.alunoId))
+    .filter(p => meusFilhos.some(f => f.id === p.alunoId) && p.statusEntrega !== 'cancelado')
     .sort((a,b) => b.criadoEm.localeCompare(a.criadoEm));
 
   if (meusPedidos.length === 0) {
@@ -3531,8 +3531,8 @@ function renderPainelHistorico() {
     pedidosPeriodo.slice(0, 30).forEach(p => {
       const aluno = State.alunos.find(a => a.id === p.alunoId);
       html += `
-        <div style="padding:12px;background:var(--pedra-50);border-radius:12px;display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
-          <div>
+        <div style="padding:12px;background:var(--pedra-50);border-radius:12px;display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;gap:10px;">
+          <div style="flex:1;min-width:0;">
             <div style="font-weight:600;font-size:14px;">${escapeHTML(aluno?.nome || '?')}</div>
             <div style="font-size:12px;color:var(--pedra-500);">${formatData(p.data)} · ${p.itens.length} item(s)</div>
           </div>
@@ -3540,6 +3540,10 @@ function renderPainelHistorico() {
             <div style="font-weight:800;color:var(--verde);">${formatBRL(p.total)}</div>
             ${badgePagamento(p.statusPagamento)}
           </div>
+          <button class="btn-anular" data-anular="${p.id}" title="Anular este pedido" aria-label="Anular pedido"
+            style="flex-shrink:0;width:34px;height:34px;border-radius:9px;background:var(--vermelho-claro);color:var(--vermelho);display:grid;place-items:center;transition:all 0.2s;">
+            ${Icons.trash || '✕'}
+          </button>
         </div>
       `;
     });
@@ -3554,6 +3558,30 @@ function bindPainelHistorico() {
     b.onclick = () => {
       State.periodoHistorico = b.dataset.periodo;
       render();
+    };
+  });
+  document.querySelectorAll('[data-anular]').forEach(b => {
+    b.onclick = async () => {
+      if (b.dataset.processando === '1') return;
+      const id = b.dataset.anular;
+      const pedido = State.pedidos.find(p => p.id === id);
+      const aluno = State.alunos.find(a => a.id === pedido?.alunoId);
+      const ok = confirm(`Anular o pedido de ${aluno?.nome || 'aluno'} (${formatBRL(pedido?.total || 0)})?\n\nEle vai sumir dos relatórios, mas continua registrado. Use isso para remover pedidos de teste ou feitos por engano.`);
+      if (!ok) return;
+      b.dataset.processando = '1';
+      b.disabled = true;
+      b.style.opacity = '0.5';
+      try {
+        await API.atualizarPedido(id, { statusEntrega: 'cancelado' });
+        if (pedido) pedido.statusEntrega = 'cancelado';
+        mostrarToast('Pedido anulado.');
+        render();
+      } catch (e) {
+        b.dataset.processando = '0';
+        b.disabled = false;
+        b.style.opacity = '1';
+        alert('Não foi possível anular. Verifique sua conexão e tente novamente.\n\nDetalhe: ' + e.message);
+      }
     };
   });
 }
