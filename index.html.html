@@ -31,6 +31,17 @@
   --pedra-600: #57534e;
   --pedra-700: #44403c;
   --pedra-900: #1c1917;
+
+  /* GLASSMORPHISM */
+  --glass-bg: rgba(255, 255, 255, 0.55);
+  --glass-bg-forte: rgba(255, 255, 255, 0.72);
+  --glass-bg-leve: rgba(255, 255, 255, 0.35);
+  --glass-borda: rgba(255, 255, 255, 0.7);
+  --glass-borda-sutil: rgba(255, 255, 255, 0.4);
+  --glass-blur: blur(20px) saturate(160%);
+  --glass-blur-forte: blur(32px) saturate(180%);
+  --glass-sombra: 0 8px 32px rgba(26, 142, 157, 0.12), inset 0 1px 0 rgba(255,255,255,0.6);
+  --glass-sombra-flutuante: 0 16px 48px rgba(26, 142, 157, 0.18), inset 0 1px 0 rgba(255,255,255,0.7);
 }
 
 * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -38,9 +49,50 @@
 body {
   font-family: 'DM Sans', system-ui, -apple-system, sans-serif;
   color: var(--pedra-900);
-  background: var(--pedra-50);
   line-height: 1.5;
   min-height: 100vh;
+  position: relative;
+  background: #eef6f8;
+  overflow-x: hidden;
+}
+
+/* Fundo atmosférico com blobs orgânicos nas cores CDA */
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  z-index: -2;
+  background:
+    radial-gradient(ellipse 70% 60% at 8% 12%, rgba(38, 183, 201, 0.35), transparent 60%),
+    radial-gradient(ellipse 60% 55% at 92% 18%, rgba(242, 193, 46, 0.28), transparent 55%),
+    radial-gradient(ellipse 65% 60% at 80% 88%, rgba(230, 57, 70, 0.18), transparent 55%),
+    radial-gradient(ellipse 55% 50% at 18% 92%, rgba(38, 183, 201, 0.25), transparent 55%),
+    linear-gradient(160deg, #f0f9fb 0%, #fdfbf3 50%, #fef4f5 100%);
+  background-attachment: fixed;
+}
+
+/* Camada de blobs animados que flutuam suavemente */
+body::after {
+  content: '';
+  position: fixed;
+  inset: -20%;
+  z-index: -1;
+  background:
+    radial-gradient(circle 320px at 25% 30%, rgba(38, 183, 201, 0.22), transparent 70%),
+    radial-gradient(circle 280px at 75% 60%, rgba(242, 193, 46, 0.18), transparent 70%);
+  filter: blur(40px);
+  animation: flutuar 22s ease-in-out infinite alternate;
+  pointer-events: none;
+}
+
+@keyframes flutuar {
+  0%   { transform: translate(0, 0) scale(1); }
+  50%  { transform: translate(4%, -3%) scale(1.08); }
+  100% { transform: translate(-3%, 4%) scale(1.02); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  body::after { animation: none; }
 }
 
 button { font-family: inherit; cursor: pointer; border: none; background: none; }
@@ -84,21 +136,43 @@ input, textarea, select { font-family: inherit; }
   align-items: center;
   justify-content: center;
   padding: 24px;
-  background: radial-gradient(ellipse at top, var(--turquesa-claro) 0%, #ffffff 60%, var(--amarelo-claro) 100%);
 }
 
 .login-card {
   width: 100%;
   max-width: 440px;
-  background: white;
+  background: var(--glass-bg-forte);
+  backdrop-filter: var(--glass-blur-forte);
+  -webkit-backdrop-filter: var(--glass-blur-forte);
   border-radius: 28px;
   padding: 36px 32px;
-  box-shadow: 0 20px 50px rgba(0,0,0,0.08);
-  border: 4px solid var(--turquesa);
-  transition: border-color 0.3s ease;
+  box-shadow: var(--glass-sombra-flutuante);
+  border: 1px solid var(--glass-borda);
+  border-top: 1px solid rgba(255,255,255,0.9);
+  position: relative;
+  transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+  animation: surgir 0.7s cubic-bezier(0.16, 1, 0.3, 1);
 }
-.login-card.modo-colegio {
-  border-color: var(--vermelho);
+.login-card::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: 28px;
+  padding: 1px;
+  background: linear-gradient(135deg, rgba(38,183,201,0.5), transparent 40%, transparent 60%, rgba(242,193,46,0.4));
+  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  pointer-events: none;
+  transition: background 0.4s ease;
+}
+.login-card.modo-colegio::before {
+  background: linear-gradient(135deg, rgba(230,57,70,0.5), transparent 40%, transparent 60%, rgba(242,193,46,0.4));
+}
+
+@keyframes surgir {
+  from { opacity: 0; transform: translateY(20px) scale(0.97); }
+  to   { opacity: 1; transform: translateY(0) scale(1); }
 }
 
 .login-logo-wrap {
@@ -109,9 +183,9 @@ input, textarea, select { font-family: inherit; }
 .login-titulo {
   text-align: center;
   font-family: 'Fraunces', serif;
-  font-size: 28px;
+  font-size: 30px;
   font-weight: 800;
-  color: var(--turquesa);
+  color: var(--turquesa-escuro);
   margin-bottom: 4px;
   letter-spacing: -0.02em;
   transition: color 0.3s ease;
@@ -120,7 +194,7 @@ input, textarea, select { font-family: inherit; }
 
 .login-subtitulo {
   text-align: center;
-  color: var(--pedra-500);
+  color: var(--pedra-600);
   font-size: 14px;
   margin-bottom: 24px;
 }
@@ -129,33 +203,36 @@ input, textarea, select { font-family: inherit; }
 .switch-modo {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  background: var(--pedra-100);
-  border-radius: 14px;
-  padding: 4px;
+  background: rgba(255,255,255,0.4);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  border: 1px solid var(--glass-borda-sutil);
+  border-radius: 16px;
+  padding: 5px;
   margin-bottom: 24px;
   position: relative;
 }
 .switch-modo button {
   padding: 12px 8px;
-  border-radius: 10px;
+  border-radius: 12px;
   font-size: 14px;
   font-weight: 700;
   color: var(--pedra-600);
-  transition: all 0.25s ease;
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
   display: flex;
   align-items: center;
   justify-content: center;
   gap: 6px;
 }
 .switch-modo button.ativo-pai {
-  background: white;
-  color: var(--turquesa);
-  box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+  background: rgba(255,255,255,0.85);
+  color: var(--turquesa-escuro);
+  box-shadow: 0 4px 14px rgba(38,183,201,0.2);
 }
 .switch-modo button.ativo-colegio {
-  background: white;
+  background: rgba(255,255,255,0.85);
   color: var(--vermelho);
-  box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+  box-shadow: 0 4px 14px rgba(230,57,70,0.2);
 }
 
 /* Form */
@@ -172,15 +249,21 @@ input, textarea, select { font-family: inherit; }
 .form-input, .form-textarea, .form-select {
   width: 100%;
   padding: 12px 14px;
-  border: 2px solid var(--pedra-200);
-  border-radius: 12px;
+  border: 1.5px solid rgba(255,255,255,0.6);
+  border-radius: 14px;
   font-size: 15px;
-  background: white;
-  transition: border-color 0.2s;
+  background: rgba(255,255,255,0.55);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  transition: all 0.25s ease;
   outline: none;
+  color: var(--pedra-900);
 }
+.form-input::placeholder, .form-textarea::placeholder { color: var(--pedra-500); }
 .form-input:focus, .form-textarea:focus, .form-select:focus {
   border-color: var(--turquesa);
+  background: rgba(255,255,255,0.8);
+  box-shadow: 0 0 0 4px rgba(38,183,201,0.12);
 }
 .form-textarea { resize: vertical; min-height: 70px; }
 .input-senha-wrap { position: relative; }
@@ -200,40 +283,47 @@ input, textarea, select { font-family: inherit; }
   justify-content: center;
   gap: 8px;
   padding: 12px 18px;
-  border-radius: 12px;
+  border-radius: 14px;
   font-weight: 700;
   font-size: 15px;
-  transition: all 0.2s;
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
   text-decoration: none;
   white-space: nowrap;
+  position: relative;
+  overflow: hidden;
 }
-.btn:hover { transform: translateY(-1px); }
+.btn:hover { transform: translateY(-2px); }
 .btn:active { transform: translateY(0); }
 .btn-primary {
-  background: var(--turquesa);
+  background: linear-gradient(135deg, var(--turquesa) 0%, var(--turquesa-escuro) 100%);
   color: white;
+  box-shadow: 0 6px 18px rgba(38,183,201,0.35);
 }
-.btn-primary:hover { background: var(--turquesa-escuro); }
+.btn-primary:hover { box-shadow: 0 10px 28px rgba(38,183,201,0.45); }
 .btn-vermelho {
-  background: var(--vermelho);
+  background: linear-gradient(135deg, var(--vermelho) 0%, var(--vermelho-escuro) 100%);
   color: white;
+  box-shadow: 0 6px 18px rgba(230,57,70,0.32);
 }
-.btn-vermelho:hover { background: var(--vermelho-escuro); }
+.btn-vermelho:hover { box-shadow: 0 10px 28px rgba(230,57,70,0.42); }
 .btn-amarelo {
   background: var(--amarelo);
   color: var(--pedra-900);
 }
 .btn-secondary {
-  background: white;
+  background: rgba(255,255,255,0.6);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
   color: var(--pedra-700);
-  border: 2px solid var(--pedra-200);
+  border: 1.5px solid rgba(255,255,255,0.7);
 }
-.btn-secondary:hover { border-color: var(--pedra-300); background: var(--pedra-50); }
+.btn-secondary:hover { background: rgba(255,255,255,0.85); }
 .btn-success {
-  background: var(--verde);
+  background: linear-gradient(135deg, var(--verde) 0%, #059669 100%);
   color: white;
+  box-shadow: 0 6px 18px rgba(16,185,129,0.35);
 }
-.btn-success:hover { background: #059669; }
+.btn-success:hover { box-shadow: 0 10px 28px rgba(16,185,129,0.45); }
 .btn-whatsapp {
   background: var(--whatsapp);
   color: white;
@@ -259,11 +349,15 @@ input, textarea, select { font-family: inherit; }
   margin-bottom: 12px;
 }
 .alert-erro {
-  background: var(--vermelho-claro);
+  background: rgba(252,232,234,0.8);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
   color: var(--vermelho-escuro);
 }
 .alert-sucesso {
-  background: var(--verde-claro);
+  background: rgba(209,250,229,0.8);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
   color: #065f46;
 }
 
@@ -272,22 +366,26 @@ input, textarea, select { font-family: inherit; }
    ============================================================ */
 .app {
   min-height: 100vh;
-  background: var(--pedra-50);
 }
 .app-pais {
-  background: linear-gradient(180deg, var(--turquesa-claro) 0%, #ffffff 50%, var(--amarelo-claro) 100%);
+  min-height: 100vh;
 }
 
 .header {
-  background: white;
-  border-bottom: 4px solid var(--turquesa);
+  background: var(--glass-bg);
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
+  border-bottom: 1px solid var(--glass-borda-sutil);
+  box-shadow: 0 4px 24px rgba(26,142,157,0.08);
   position: sticky;
   top: 0;
   z-index: 10;
 }
 .header-colegio {
-  background: var(--turquesa);
-  border-bottom: 4px solid var(--amarelo);
+  background: linear-gradient(135deg, rgba(38,183,201,0.88) 0%, rgba(26,142,157,0.92) 100%);
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
+  border-bottom: 1px solid rgba(242,193,46,0.5);
   color: white;
 }
 
@@ -326,16 +424,16 @@ input, textarea, select { font-family: inherit; }
   padding: 12px 16px;
   font-size: 14px;
   font-weight: 600;
-  color: var(--pedra-500);
+  color: var(--pedra-600);
   border-bottom: 3px solid transparent;
   white-space: nowrap;
-  transition: all 0.2s;
+  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
 }
-.header-colegio .tab { color: rgba(255,255,255,0.7); }
-.tab:hover { color: var(--pedra-900); }
+.header-colegio .tab { color: rgba(255,255,255,0.78); }
+.tab:hover { color: var(--turquesa-escuro); }
 .header-colegio .tab:hover { color: white; }
 .tab.ativa {
-  color: var(--turquesa);
+  color: var(--turquesa-escuro);
   border-bottom-color: var(--turquesa);
 }
 .header-colegio .tab.ativa {
@@ -352,11 +450,11 @@ input, textarea, select { font-family: inherit; }
 
 .page-titulo {
   font-family: 'Fraunces', serif;
-  font-size: 36px;
+  font-size: 38px;
   font-weight: 800;
-  color: var(--turquesa);
+  color: var(--turquesa-escuro);
   margin-bottom: 4px;
-  letter-spacing: -0.02em;
+  letter-spacing: -0.025em;
 }
 .page-subtitulo {
   color: var(--pedra-600);
@@ -373,24 +471,30 @@ input, textarea, select { font-family: inherit; }
   flex: 1;
   height: 6px;
   border-radius: 3px;
-  background: var(--pedra-200);
-  transition: background 0.3s;
+  background: rgba(255,255,255,0.5);
+  transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
 }
-.progresso-step.ativa { background: var(--turquesa); }
+.progresso-step.ativa {
+  background: linear-gradient(90deg, var(--turquesa), var(--turquesa-escuro));
+  box-shadow: 0 2px 8px rgba(38,183,201,0.4);
+}
 
 /* Cards */
 .card {
-  background: white;
-  border: 2px solid var(--pedra-200);
-  border-radius: 18px;
+  background: var(--glass-bg);
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
+  border: 1px solid var(--glass-borda);
+  border-top: 1px solid rgba(255,255,255,0.8);
+  border-radius: 20px;
   padding: 20px;
-  transition: all 0.2s;
+  box-shadow: var(--glass-sombra);
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
 }
 .card-clickable { cursor: pointer; text-align: left; width: 100%; }
 .card-clickable:hover {
-  border-color: var(--turquesa);
-  box-shadow: 0 8px 20px rgba(0,0,0,0.05);
-  transform: translateY(-1px);
+  box-shadow: var(--glass-sombra-flutuante);
+  transform: translateY(-3px);
 }
 
 .card-info {
@@ -400,19 +504,32 @@ input, textarea, select { font-family: inherit; }
   margin-bottom: 32px;
 }
 @media (min-width: 768px) {
-  .card-info { grid-template-columns: repeat(4, 1fr); }
+  .card-info { grid-template-columns: repeat(5, 1fr); }
 }
 
 .kpi {
-  border-radius: 18px;
+  border-radius: 20px;
   padding: 18px;
   color: white;
+  position: relative;
+  overflow: hidden;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.1), inset 0 1px 0 rgba(255,255,255,0.25);
+  border: 1px solid rgba(255,255,255,0.18);
+}
+.kpi::after {
+  content: '';
+  position: absolute;
+  top: -50%; right: -30%;
+  width: 120px; height: 120px;
+  background: radial-gradient(circle, rgba(255,255,255,0.25), transparent 70%);
+  border-radius: 50%;
+  pointer-events: none;
 }
 .kpi-label {
   font-size: 11px;
   text-transform: uppercase;
   letter-spacing: 0.05em;
-  opacity: 0.85;
+  opacity: 0.9;
   margin-bottom: 4px;
 }
 .kpi-valor {
@@ -424,11 +541,11 @@ input, textarea, select { font-family: inherit; }
 .kpi-icon {
   width: 22px; height: 22px; opacity: 0.85; margin-bottom: 8px;
 }
-.kpi-stone { background: var(--pedra-900); }
-.kpi-amarelo { background: var(--amarelo); color: #7c2d12; }
-.kpi-turquesa { background: var(--turquesa); }
-.kpi-vermelho { background: var(--vermelho); }
-.kpi-verde { background: var(--verde); }
+.kpi-stone { background: linear-gradient(135deg, #44403c, #1c1917); }
+.kpi-amarelo { background: linear-gradient(135deg, #F2C12E, #d9a91a); color: #6b3410; }
+.kpi-turquesa { background: linear-gradient(135deg, var(--turquesa), var(--turquesa-escuro)); }
+.kpi-vermelho { background: linear-gradient(135deg, var(--vermelho), var(--vermelho-escuro)); }
+.kpi-verde { background: linear-gradient(135deg, #10b981, #059669); }
 
 .grid-2 { display: grid; grid-template-columns: 1fr; gap: 24px; }
 @media (min-width: 1024px) { .grid-2 { grid-template-columns: 1fr 1fr; } }
@@ -442,23 +559,27 @@ input, textarea, select { font-family: inherit; }
   display: flex;
   align-items: center;
   gap: 16px;
-  background: white;
+  background: var(--glass-bg);
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
   padding: 14px;
-  border-radius: 16px;
-  border: 2px solid var(--pedra-200);
+  border-radius: 18px;
+  border: 1px solid var(--glass-borda);
+  border-top: 1px solid rgba(255,255,255,0.8);
+  box-shadow: var(--glass-sombra);
   width: 100%;
   text-align: left;
-  margin-bottom: 8px;
-  transition: all 0.2s;
+  margin-bottom: 10px;
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
 }
 .aluno-btn:hover {
-  border-color: var(--turquesa);
-  box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+  transform: translateY(-3px) scale(1.01);
+  box-shadow: var(--glass-sombra-flutuante);
 }
 .aluno-avatar {
   width: 48px; height: 48px;
   border-radius: 50%;
-  background: var(--turquesa);
+  background: linear-gradient(135deg, var(--turquesa), var(--turquesa-escuro));
   color: white;
   display: flex;
   align-items: center;
@@ -466,20 +587,30 @@ input, textarea, select { font-family: inherit; }
   font-weight: 800;
   font-size: 18px;
   flex-shrink: 0;
+  box-shadow: 0 4px 12px rgba(38,183,201,0.35);
 }
 .aluno-nome { font-weight: 700; }
-.aluno-meta { font-size: 13px; color: var(--pedra-500); }
+.aluno-meta { font-size: 13px; color: var(--pedra-600); }
 
 /* Produto card */
 .produto-card {
-  background: white;
+  background: var(--glass-bg);
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
   padding: 14px;
-  border-radius: 16px;
-  border: 2px solid var(--pedra-200);
+  border-radius: 18px;
+  border: 1px solid var(--glass-borda);
+  border-top: 1px solid rgba(255,255,255,0.8);
+  box-shadow: var(--glass-sombra);
   display: flex;
   align-items: center;
   gap: 14px;
   margin-bottom: 10px;
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.produto-card:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--glass-sombra-flutuante);
 }
 .produto-emoji { font-size: 36px; }
 .produto-info { flex: 1; }
@@ -502,10 +633,11 @@ input, textarea, select { font-family: inherit; }
   transition: all 0.15s;
 }
 .qtd-btn-add {
-  background: var(--turquesa);
+  background: linear-gradient(135deg, var(--turquesa), var(--turquesa-escuro));
   color: white;
+  box-shadow: 0 3px 10px rgba(38,183,201,0.4);
 }
-.qtd-btn:hover { transform: scale(1.05); }
+.qtd-btn:hover { transform: scale(1.12); }
 .qtd-num { font-weight: 800; font-size: 18px; min-width: 24px; text-align: center; }
 
 /* Carrinho fixo */
@@ -513,32 +645,46 @@ input, textarea, select { font-family: inherit; }
   position: sticky;
   bottom: 16px;
   margin-top: 16px;
-  background: var(--verde);
+  background: linear-gradient(135deg, rgba(16,185,129,0.92), rgba(5,150,105,0.95));
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
   color: white;
-  padding: 16px 20px;
-  border-radius: 18px;
+  padding: 16px 22px;
+  border-radius: 20px;
   font-weight: 700;
   display: flex;
   justify-content: space-between;
   align-items: center;
-  box-shadow: 0 10px 30px rgba(16,185,129,0.3);
+  box-shadow: 0 12px 36px rgba(16,185,129,0.4), inset 0 1px 0 rgba(255,255,255,0.3);
+  border: 1px solid rgba(255,255,255,0.25);
   cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  animation: pulsar-entrada 0.4s cubic-bezier(0.16, 1, 0.3, 1);
 }
+.cart-bar:hover { transform: translateY(-3px); box-shadow: 0 16px 44px rgba(16,185,129,0.5), inset 0 1px 0 rgba(255,255,255,0.3); }
 .cart-bar-total { color: var(--amarelo); }
+@keyframes pulsar-entrada {
+  from { opacity: 0; transform: translateY(12px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
 
 /* Resumo aluno (header) */
 .resumo-aluno {
-  background: var(--turquesa);
+  background: linear-gradient(135deg, rgba(38,183,201,0.9), rgba(26,142,157,0.95));
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
   color: white;
   padding: 16px 18px;
-  border-radius: 16px;
+  border-radius: 18px;
   margin-bottom: 20px;
+  box-shadow: 0 8px 24px rgba(38,183,201,0.3), inset 0 1px 0 rgba(255,255,255,0.25);
+  border: 1px solid rgba(255,255,255,0.2);
 }
 .resumo-aluno-label {
   font-size: 11px;
   text-transform: uppercase;
   letter-spacing: 0.05em;
-  opacity: 0.85;
+  opacity: 0.9;
 }
 .resumo-aluno-nome {
   font-size: 20px;
@@ -552,7 +698,7 @@ input, textarea, select { font-family: inherit; }
   display: flex;
   justify-content: space-between;
   padding: 8px 0;
-  border-bottom: 1px solid var(--pedra-100);
+  border-bottom: 1px solid rgba(0,0,0,0.06);
 }
 .item-row:last-child { border-bottom: none; }
 .total-row {
@@ -560,7 +706,7 @@ input, textarea, select { font-family: inherit; }
   justify-content: space-between;
   padding-top: 12px;
   margin-top: 8px;
-  border-top: 2px solid var(--pedra-200);
+  border-top: 1.5px solid rgba(0,0,0,0.1);
   font-weight: 800;
 }
 .total-valor {
@@ -577,46 +723,64 @@ input, textarea, select { font-family: inherit; }
 }
 .toggle-opcao {
   padding: 14px;
-  border-radius: 12px;
-  border: 2px solid var(--pedra-200);
+  border-radius: 14px;
+  border: 1.5px solid rgba(255,255,255,0.6);
   font-weight: 700;
   color: var(--pedra-600);
-  background: white;
-  transition: all 0.2s;
+  background: rgba(255,255,255,0.45);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  transition: all 0.25s ease;
 }
 .toggle-opcao.ativo {
   border-color: var(--turquesa);
-  background: var(--turquesa-claro);
-  color: var(--turquesa);
+  background: rgba(38,183,201,0.15);
+  color: var(--turquesa-escuro);
+  box-shadow: 0 0 0 3px rgba(38,183,201,0.1);
 }
 
 /* Sucesso */
 .sucesso-card {
-  background: white;
-  border: 4px solid var(--verde);
+  background: var(--glass-bg-forte);
+  backdrop-filter: var(--glass-blur-forte);
+  -webkit-backdrop-filter: var(--glass-blur-forte);
+  border: 1px solid rgba(16,185,129,0.4);
+  border-top: 1px solid rgba(255,255,255,0.8);
   border-radius: 24px;
   padding: 32px 24px;
   text-align: center;
   margin-bottom: 16px;
+  box-shadow: 0 12px 40px rgba(16,185,129,0.2), inset 0 1px 0 rgba(255,255,255,0.6);
+  animation: surgir 0.6s cubic-bezier(0.16, 1, 0.3, 1);
 }
 .sucesso-icon {
   width: 72px; height: 72px;
   border-radius: 50%;
-  background: var(--verde-claro);
+  background: linear-gradient(135deg, var(--verde-claro), #a7f3d0);
   color: var(--verde);
   display: inline-flex;
   align-items: center;
   justify-content: center;
   margin-bottom: 14px;
+  box-shadow: 0 8px 20px rgba(16,185,129,0.3);
+  animation: pop 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) 0.15s both;
 }
 .sucesso-icon svg { width: 40px; height: 40px; }
+@keyframes pop {
+  from { transform: scale(0); }
+  to   { transform: scale(1); }
+}
 
 .pix-card {
-  background: var(--turquesa);
+  background: linear-gradient(135deg, rgba(38,183,201,0.92), rgba(26,142,157,0.95));
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
   color: white;
   padding: 22px;
-  border-radius: 18px;
+  border-radius: 20px;
   margin-bottom: 12px;
+  box-shadow: 0 10px 30px rgba(38,183,201,0.35), inset 0 1px 0 rgba(255,255,255,0.25);
+  border: 1px solid rgba(255,255,255,0.2);
 }
 .pix-label {
   font-size: 11px;
@@ -634,6 +798,7 @@ input, textarea, select { font-family: inherit; }
 .pix-nome { font-size: 14px; opacity: 0.9; margin-bottom: 14px; }
 .pix-chave-box {
   background: rgba(255,255,255,0.18);
+  border: 1px solid rgba(255,255,255,0.25);
   border-radius: 12px;
   padding: 12px 14px;
   margin-bottom: 12px;
@@ -658,17 +823,21 @@ input, textarea, select { font-family: inherit; }
 
 /* Tabela */
 .tabela-wrap {
-  background: white;
-  border: 2px solid var(--pedra-200);
-  border-radius: 18px;
+  background: var(--glass-bg);
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
+  border: 1px solid var(--glass-borda);
+  border-top: 1px solid rgba(255,255,255,0.8);
+  border-radius: 20px;
   overflow: hidden;
+  box-shadow: var(--glass-sombra);
 }
 .tabela {
   width: 100%;
   border-collapse: collapse;
 }
 .tabela thead {
-  background: var(--pedra-50);
+  background: rgba(255,255,255,0.4);
 }
 .tabela th {
   text-align: left;
@@ -677,14 +846,14 @@ input, textarea, select { font-family: inherit; }
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.05em;
-  color: var(--pedra-500);
+  color: var(--pedra-600);
 }
 .tabela td {
   padding: 14px;
-  border-top: 1px solid var(--pedra-100);
+  border-top: 1px solid rgba(0,0,0,0.05);
   font-size: 14px;
 }
-.tabela tbody tr:hover { background: var(--pedra-50); }
+.tabela tbody tr:hover { background: rgba(255,255,255,0.45); }
 .tabela .text-right { text-align: right; }
 .tabela .num { font-weight: 700; color: var(--pedra-900); }
 .tabela .vermelho { color: var(--verde); font-weight: 700; }
@@ -705,14 +874,20 @@ input, textarea, select { font-family: inherit; }
 
 /* Pedido card (lanchonete e pais) */
 .pedido-card {
-  background: white;
-  border: 2px solid var(--pedra-200);
-  border-radius: 14px;
+  background: var(--glass-bg);
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
+  border: 1px solid var(--glass-borda);
+  border-top: 1px solid rgba(255,255,255,0.75);
+  border-radius: 16px;
   padding: 14px;
   margin-bottom: 10px;
+  box-shadow: var(--glass-sombra);
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
 }
-.pedido-card.entregue { background: var(--verde-claro); border-color: #6ee7b7; opacity: 0.7; }
-.pedido-card.cancelado { background: var(--pedra-100); border-color: var(--pedra-200); opacity: 0.6; }
+.pedido-card:hover { transform: translateY(-2px); box-shadow: var(--glass-sombra-flutuante); }
+.pedido-card.entregue { background: rgba(209,250,229,0.6); border-color: rgba(110,231,183,0.6); opacity: 0.75; }
+.pedido-card.cancelado { background: rgba(245,245,244,0.6); border-color: var(--pedra-200); opacity: 0.6; }
 
 .pedido-header {
   display: flex;
@@ -755,27 +930,34 @@ input, textarea, select { font-family: inherit; }
   border-radius: 12px;
   font-weight: 600;
   font-size: 13px;
-  background: white;
-  border: 2px solid var(--pedra-200);
+  background: rgba(255,255,255,0.5);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  border: 1px solid var(--glass-borda-sutil);
   color: var(--pedra-600);
-  transition: all 0.2s;
+  transition: all 0.25s ease;
 }
 .filtro-btn.ativo {
-  background: var(--turquesa);
+  background: linear-gradient(135deg, var(--turquesa), var(--turquesa-escuro));
   color: white;
-  border-color: var(--turquesa);
+  border-color: transparent;
+  box-shadow: 0 4px 14px rgba(38,183,201,0.3);
 }
 
 /* Pagamentos pendentes total */
 .pendente-total {
-  background: var(--vermelho-claro);
-  border: 2px solid var(--vermelho);
-  border-radius: 18px;
+  background: linear-gradient(135deg, rgba(252,232,234,0.7), rgba(255,255,255,0.5));
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
+  border: 1px solid rgba(230,57,70,0.35);
+  border-top: 1px solid rgba(255,255,255,0.7);
+  border-radius: 20px;
   padding: 18px;
   margin-bottom: 20px;
   display: flex;
   align-items: center;
   gap: 14px;
+  box-shadow: 0 8px 28px rgba(230,57,70,0.12);
 }
 .pendente-total svg { color: var(--vermelho); width: 32px; height: 32px; flex-shrink: 0; }
 .pendente-total-label {
@@ -794,46 +976,57 @@ input, textarea, select { font-family: inherit; }
 }
 .barra-bar {
   height: 8px;
-  background: var(--pedra-100);
+  background: rgba(0,0,0,0.06);
   border-radius: 4px;
   overflow: hidden;
 }
 .barra-fill {
   height: 100%;
-  background: var(--amarelo);
-  transition: width 0.5s ease;
+  background: linear-gradient(90deg, var(--amarelo), #d9a91a);
+  border-radius: 4px;
+  transition: width 0.6s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 /* Empty state */
 .empty {
   text-align: center;
   padding: 48px 24px;
-  background: white;
-  border: 2px dashed var(--pedra-200);
-  border-radius: 18px;
-  color: var(--pedra-500);
+  background: rgba(255,255,255,0.4);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  border: 1.5px dashed rgba(38,183,201,0.3);
+  border-radius: 20px;
+  color: var(--pedra-600);
 }
-.empty-icon { width: 48px; height: 48px; color: var(--pedra-300); margin: 0 auto 12px; }
+.empty-icon { width: 48px; height: 48px; color: var(--turquesa); opacity: 0.4; margin: 0 auto 12px; }
 
 /* Modal */
 .modal-bg {
   position: fixed;
   inset: 0;
-  background: rgba(0,0,0,0.5);
+  background: rgba(26, 60, 66, 0.35);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
   display: flex;
   align-items: center;
   justify-content: center;
   padding: 20px;
   z-index: 100;
-  animation: fadeIn 0.2s;
+  animation: fadeIn 0.25s;
 }
 @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
 .modal {
-  background: white;
+  background: var(--glass-bg-forte);
+  backdrop-filter: var(--glass-blur-forte);
+  -webkit-backdrop-filter: var(--glass-blur-forte);
+  border: 1px solid var(--glass-borda);
+  border-top: 1px solid rgba(255,255,255,0.9);
   border-radius: 24px;
   padding: 28px;
   max-width: 540px;
   width: 100%;
+  box-shadow: 0 24px 64px rgba(26,142,157,0.25), inset 0 1px 0 rgba(255,255,255,0.6);
+  animation: surgir 0.4s cubic-bezier(0.16, 1, 0.3, 1);
   max-height: 90vh;
   overflow-y: auto;
 }
@@ -879,9 +1072,12 @@ input, textarea, select { font-family: inherit; }
 
 /* Avisos no topo */
 .aviso {
-  background: var(--amarelo-claro);
-  border: 1px solid var(--amarelo);
-  border-radius: 12px;
+  background: linear-gradient(135deg, rgba(254,246,220,0.8), rgba(255,255,255,0.5));
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border: 1px solid rgba(242,193,46,0.5);
+  border-top: 1px solid rgba(255,255,255,0.7);
+  border-radius: 14px;
   padding: 12px 14px;
   margin-bottom: 16px;
   font-size: 13px;
@@ -889,6 +1085,7 @@ input, textarea, select { font-family: inherit; }
   display: flex;
   align-items: flex-start;
   gap: 8px;
+  box-shadow: 0 4px 16px rgba(242,193,46,0.12);
 }
 
 /* ============================================================
@@ -1086,6 +1283,45 @@ input, textarea, select { font-family: inherit; }
   .main { padding: 24px 18px; }
   .grid-2 { grid-template-columns: 1fr; }
 }
+
+/* ============================================================
+   ANIMAÇÕES DE ENTRADA (load orquestrado)
+   ============================================================ */
+.main > .page-titulo,
+.main > h1.page-titulo {
+  animation: entrar-cima 0.6s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+.page-subtitulo {
+  animation: entrar-cima 0.6s cubic-bezier(0.16, 1, 0.3, 1) 0.06s both;
+}
+.card-info {
+  animation: entrar-cima 0.6s cubic-bezier(0.16, 1, 0.3, 1) 0.12s both;
+}
+.grid-2, .grid-3, .tabela-wrap, .filtros {
+  animation: entrar-cima 0.6s cubic-bezier(0.16, 1, 0.3, 1) 0.18s both;
+}
+
+@keyframes entrar-cima {
+  from { opacity: 0; transform: translateY(16px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* Cards de produto e aluno entram em cascata */
+.produto-card { animation: entrar-cima 0.5s cubic-bezier(0.16, 1, 0.3, 1) both; }
+.produto-card:nth-child(1) { animation-delay: 0.04s; }
+.produto-card:nth-child(2) { animation-delay: 0.08s; }
+.produto-card:nth-child(3) { animation-delay: 0.12s; }
+.produto-card:nth-child(4) { animation-delay: 0.16s; }
+.produto-card:nth-child(5) { animation-delay: 0.20s; }
+.produto-card:nth-child(6) { animation-delay: 0.24s; }
+.aluno-btn { animation: entrar-cima 0.5s cubic-bezier(0.16, 1, 0.3, 1) both; }
+
+@media (prefers-reduced-motion: reduce) {
+  .main > .page-titulo, .page-subtitulo, .card-info, .grid-2, .grid-3,
+  .tabela-wrap, .filtros, .produto-card, .aluno-btn {
+    animation: none;
+  }
+}
 </style>
 </head>
 <body>
@@ -1179,7 +1415,8 @@ const State = {
 function fromDBPai(p) {
   return {
     id: p.id, nome: p.nome, usuario: p.usuario, email: p.email,
-    telefone: p.telefone, senhaHash: p.senha_hash, criadoEm: p.criado_em
+    telefone: p.telefone, senhaHash: p.senha_hash, criadoEm: p.criado_em,
+    senhaTemporaria: p.senha_temporaria !== false // default true se a coluna não existir ainda
   };
 }
 function fromDBAluno(a) {
@@ -1254,14 +1491,24 @@ const API = {
   async criarPai(p) {
     const { data, error } = await db.from('pais').insert({
       nome: p.nome, usuario: p.usuario, email: p.email || null,
-      telefone: p.telefone, senha_hash: p.senhaHash
+      telefone: p.telefone, senha_hash: p.senhaHash,
+      senha_temporaria: true
     }).select().single();
     if (error) throw error;
     return fromDBPai(data);
   },
+  async definirSenhaPropria(id, novoHash) {
+    const { error } = await db.from('pais').update({
+      senha_hash: novoHash, senha_temporaria: false
+    }).eq('id', id);
+    if (error) throw error;
+  },
   async atualizarPai(id, p) {
     const update = { nome: p.nome, usuario: p.usuario, email: p.email || null, telefone: p.telefone };
-    if (p.senhaHash) update.senha_hash = p.senhaHash;
+    if (p.senhaHash) {
+      update.senha_hash = p.senhaHash;
+      update.senha_temporaria = true; // senha redefinida pelo admin = pai troca no próximo acesso
+    }
     const { error } = await db.from('pais').update(update).eq('id', id);
     if (error) throw error;
   },
@@ -1433,6 +1680,13 @@ function render() {
     return;
   }
 
+  // Primeiro acesso: pai precisa criar a própria senha antes de usar o sistema
+  if (State.tela === 'definir-senha') {
+    app.innerHTML = renderDefinirSenha();
+    bindDefinirSenha();
+    return;
+  }
+
   if (State.sessao.tipo === 'pai') {
     app.innerHTML = renderAppPai();
     bindAppPai();
@@ -1552,16 +1806,19 @@ function bindLogin() {
         (p.usuario && p.usuario === loginInput) ||
         (p.email && p.email === loginInput)
       );
-      if (!pai) {
-        alerta.innerHTML = `<div class="alert alert-erro">${Icons.alert}<span>Usuário ou email não cadastrado. Solicite ao colégio que crie seu acesso.</span></div>`;
-        return;
-      }
-      if (pai.senhaHash !== hashSenha(senha)) {
-        alerta.innerHTML = `<div class="alert alert-erro">${Icons.alert}<span>Senha incorreta.</span></div>`;
+      // Mensagem única para usuário inexistente OU senha errada (não revela qual dos dois falhou)
+      const erroGenerico = `<div class="alert alert-erro">${Icons.alert}<span>Usuário ou senha incorretos. Em caso de dúvida, entre em contato com o colégio.</span></div>`;
+      if (!pai || pai.senhaHash !== hashSenha(senha)) {
+        alerta.innerHTML = erroGenerico;
         return;
       }
       State.sessao = { tipo: 'pai', userId: pai.id };
-      State.tela = 'app';
+      // Se a senha ainda é temporária, força criar uma senha própria antes de entrar
+      if (pai.senhaTemporaria) {
+        State.tela = 'definir-senha';
+      } else {
+        State.tela = 'app';
+      }
       render();
     }
   };
@@ -1579,6 +1836,146 @@ function logout() {
   State.observacaoPedido = '';
   State.pedidoFinalId = null;
   render();
+}
+
+/* ============================================================
+   PRIMEIRO ACESSO: DEFINIR SENHA PRÓPRIA
+   ============================================================ */
+// Regras de senha forte (padrão atual razoável para o contexto)
+function validarSenhaForte(senha) {
+  const problemas = [];
+  if (senha.length < 8) problemas.push('Pelo menos 8 caracteres');
+  if (!/[a-zA-Z]/.test(senha)) problemas.push('Pelo menos uma letra');
+  if (!/[0-9]/.test(senha)) problemas.push('Pelo menos um número');
+  return problemas;
+}
+
+// Calcula força (0 a 4) para o medidor visual
+function forcaSenha(senha) {
+  let f = 0;
+  if (senha.length >= 8) f++;
+  if (senha.length >= 12) f++;
+  if (/[a-z]/.test(senha) && /[A-Z]/.test(senha)) f++;
+  if (/[0-9]/.test(senha)) f++;
+  if (/[^a-zA-Z0-9]/.test(senha)) f++;
+  return Math.min(f, 4);
+}
+
+function renderDefinirSenha() {
+  const pai = State.pais.find(p => p.id === State.sessao.userId);
+  return `
+    <div class="login-bg">
+      <div class="login-card">
+        <div class="login-logo-wrap">${logoHTML('logo-lg')}</div>
+        <h1 class="login-titulo">Crie sua senha</h1>
+        <p class="login-subtitulo">Olá, ${escapeHTML((pai?.nome || '').split(' ')[0])}! Este é seu primeiro acesso.<br>Defina uma senha pessoal para proteger sua conta.</p>
+        <form id="form-definir-senha">
+          <div class="form-group">
+            <label class="form-label">Nova senha</label>
+            <div style="position:relative;">
+              <input type="password" class="form-input" id="nova-senha" placeholder="Crie uma senha" autocomplete="new-password">
+              <button type="button" id="toggle-nova" style="position:absolute;right:12px;top:50%;transform:translateY(-50%);color:var(--pedra-500);">${Icons.eye}</button>
+            </div>
+          </div>
+          <div id="medidor-senha" style="margin-bottom:14px;"></div>
+          <div class="form-group">
+            <label class="form-label">Confirme a senha</label>
+            <input type="password" class="form-input" id="confirma-senha" placeholder="Digite novamente" autocomplete="new-password">
+          </div>
+          <div style="background:var(--pedra-50);border-radius:12px;padding:12px 14px;margin-bottom:16px;font-size:13px;color:var(--pedra-600);">
+            <strong style="display:block;margin-bottom:6px;color:var(--pedra-700);">Sua senha precisa ter:</strong>
+            <div id="regra-len">○ Pelo menos 8 caracteres</div>
+            <div id="regra-letra">○ Pelo menos uma letra</div>
+            <div id="regra-num">○ Pelo menos um número</div>
+          </div>
+          <div id="alerta-definir"></div>
+          <button type="submit" class="btn btn-primary btn-block">Salvar e entrar</button>
+        </form>
+      </div>
+    </div>
+  `;
+}
+
+function bindDefinirSenha() {
+  const novaInput = document.getElementById('nova-senha');
+  const confirmaInput = document.getElementById('confirma-senha');
+  const medidor = document.getElementById('medidor-senha');
+
+  // Toggle mostrar/ocultar senha
+  document.getElementById('toggle-nova').onclick = () => {
+    const tipo = novaInput.type === 'password' ? 'text' : 'password';
+    novaInput.type = tipo;
+  };
+
+  // Atualiza medidor e checklist em tempo real
+  function atualizar() {
+    const s = novaInput.value;
+    const f = forcaSenha(s);
+    const cores = ['#e7e5e4', '#E63946', '#F2C12E', '#26B7C9', '#10b981'];
+    const textos = ['', 'Fraca', 'Razoável', 'Boa', 'Forte'];
+    let barras = '';
+    for (let i = 1; i <= 4; i++) {
+      barras += `<div style="flex:1;height:6px;border-radius:3px;background:${i <= f ? cores[f] : '#e7e5e4'};transition:background 0.3s;"></div>`;
+    }
+    medidor.innerHTML = s ? `
+      <div style="display:flex;gap:5px;margin-bottom:6px;">${barras}</div>
+      <div style="font-size:12px;font-weight:600;color:${cores[f]};">${textos[f]}</div>
+    ` : '';
+
+    // Checklist
+    const setRegra = (id, ok) => {
+      const el = document.getElementById(id);
+      if (el) {
+        el.style.color = ok ? 'var(--verde)' : 'var(--pedra-600)';
+        el.textContent = (ok ? '● ' : '○ ') + el.textContent.slice(2);
+      }
+    };
+    setRegra('regra-len', s.length >= 8);
+    setRegra('regra-letra', /[a-zA-Z]/.test(s));
+    setRegra('regra-num', /[0-9]/.test(s));
+  }
+  novaInput.addEventListener('input', atualizar);
+
+  document.getElementById('form-definir-senha').onsubmit = async (e) => {
+    e.preventDefault();
+    const nova = novaInput.value;
+    const confirma = confirmaInput.value;
+    const alerta = document.getElementById('alerta-definir');
+    alerta.innerHTML = '';
+
+    const problemas = validarSenhaForte(nova);
+    if (problemas.length > 0) {
+      alerta.innerHTML = `<div class="alert alert-erro">${Icons.alert}<span>A senha não atende aos requisitos: ${problemas.join(', ').toLowerCase()}.</span></div>`;
+      return;
+    }
+    if (nova !== confirma) {
+      alerta.innerHTML = `<div class="alert alert-erro">${Icons.alert}<span>As senhas não coincidem. Digite a mesma senha nos dois campos.</span></div>`;
+      return;
+    }
+
+    const btn = e.currentTarget.querySelector('button[type="submit"]');
+    if (btn.dataset.processando === '1') return;
+    btn.dataset.processando = '1';
+    btn.disabled = true;
+    btn.style.opacity = '0.6';
+    btn.textContent = 'Salvando...';
+
+    try {
+      const pai = State.pais.find(p => p.id === State.sessao.userId);
+      await API.definirSenhaPropria(pai.id, hashSenha(nova));
+      pai.senhaHash = hashSenha(nova);
+      pai.senhaTemporaria = false;
+      State.tela = 'app';
+      render();
+      mostrarToast('Senha criada com sucesso!');
+    } catch (err) {
+      btn.dataset.processando = '0';
+      btn.disabled = false;
+      btn.style.opacity = '1';
+      btn.textContent = 'Salvar e entrar';
+      alerta.innerHTML = `<div class="alert alert-erro">${Icons.alert}<span>Não foi possível salvar. Verifique sua conexão e tente novamente.</span></div>`;
+    }
+  };
 }
 </script>
 
@@ -1836,7 +2233,7 @@ function renderEtapaPagamento() {
       </div>
     </div>
 
-    <button class="btn btn-vermelho btn-block" id="btn-confirmar-pedido">Confirmar reserva</button>
+    <button class="btn btn-success btn-block" id="btn-confirmar-pedido">Confirmar reserva</button>
   `;
   return html;
 }
@@ -1942,9 +2339,16 @@ function bindNovoPedido() {
       render();
     };
   });
-  document.getElementById('btn-confirmar-pedido')?.addEventListener('click', () => {
+  document.getElementById('btn-confirmar-pedido')?.addEventListener('click', (e) => {
     const obs = document.getElementById('input-observacao')?.value || '';
     State.observacaoPedido = obs;
+    // Trava contra duplo-clique: desabilita o botão imediatamente
+    const btn = e.currentTarget;
+    if (btn.dataset.processando === '1') return;
+    btn.dataset.processando = '1';
+    btn.disabled = true;
+    btn.style.opacity = '0.6';
+    btn.textContent = 'Reservando...';
     finalizarPedido();
   });
 
@@ -1997,7 +2401,15 @@ async function finalizarPedido() {
     State.pedidoEtapa = 'sucesso';
     render();
   } catch (e) {
-    alert('Erro ao salvar pedido: ' + e.message);
+    // Reabilita o botão para o usuário poder tentar novamente
+    const btn = document.getElementById('btn-confirmar-pedido');
+    if (btn) {
+      btn.dataset.processando = '0';
+      btn.disabled = false;
+      btn.style.opacity = '1';
+      btn.textContent = 'Confirmar reserva';
+    }
+    alert('Não foi possível salvar o pedido. Verifique sua conexão e tente novamente.\n\nDetalhe: ' + e.message);
   }
 }
 
@@ -2224,9 +2636,14 @@ function renderPainelProducao() {
   const pedidosHoje = State.pedidos.filter(p => p.data === hoje);
   const pedidosValidos = pedidosHoje.filter(p => p.statusEntrega !== 'cancelado');
 
-  // Agregar produção
+  // Pedidos ainda NÃO entregues (o que falta preparar)
+  const pedidosPendentes = pedidosValidos.filter(p => p.statusEntrega === 'reservado');
+  // Pedidos JÁ entregues
+  const pedidosEntregues = pedidosValidos.filter(p => p.statusEntrega === 'entregue');
+
+  // Agregar produção SOMENTE do que falta preparar (não entregue)
   const producaoMap = {};
-  pedidosValidos.forEach(p => {
+  pedidosPendentes.forEach(p => {
     p.itens.forEach(i => {
       if (!producaoMap[i.produtoId]) producaoMap[i.produtoId] = { ...i, quantidade: 0 };
       producaoMap[i.produtoId].quantidade += i.quantidade;
@@ -2234,7 +2651,11 @@ function renderPainelProducao() {
   });
   const producao = Object.values(producaoMap).sort((a,b) => b.quantidade - a.quantidade);
 
+  // Lanches a preparar = só os não entregues
   const totalLanches = producao.reduce((s,p) => s + p.quantidade, 0);
+  // Lanches entregues = soma dos itens dos pedidos entregues
+  const totalEntregues = pedidosEntregues.reduce((s,p) => s + p.itens.reduce((so,i) => so + i.quantidade, 0), 0);
+
   const faturamento = pedidosValidos.reduce((s,p) => s + p.total, 0);
   const pendentes = pedidosHoje.filter(p => p.statusPagamento === 'pendente' && p.statusEntrega !== 'cancelado').length;
 
@@ -2252,6 +2673,11 @@ function renderPainelProducao() {
         ${kpiIcon(Icons.sandwich)}
         <div class="kpi-label">Lanches a preparar</div>
         <div class="kpi-valor">${totalLanches}</div>
+      </div>
+      <div class="kpi kpi-turquesa">
+        ${kpiIcon(Icons.checkCircle)}
+        <div class="kpi-label">Lanches entregues</div>
+        <div class="kpi-valor">${totalEntregues}</div>
       </div>
       <div class="kpi kpi-turquesa">
         ${kpiIcon(Icons.dollar)}
@@ -2273,7 +2699,7 @@ function renderPainelProducao() {
   `;
 
   if (producao.length === 0) {
-    html += `<p style="text-align:center;color:var(--pedra-500);padding:24px 0;">Nenhum pedido para hoje ainda.</p>`;
+    html += `<p style="text-align:center;color:var(--pedra-500);padding:24px 0;">${totalEntregues > 0 ? 'Tudo entregue! Nada na fila. 🎉' : 'Nenhum pedido para hoje ainda.'}</p>`;
   } else {
     producao.forEach(p => {
       html += `
@@ -2343,25 +2769,43 @@ function renderPainelProducao() {
 function bindPainelProducao() {
   document.querySelectorAll('[data-entregar]').forEach(b => {
     b.onclick = async () => {
+      if (b.dataset.processando === '1') return;
+      b.dataset.processando = '1';
+      b.disabled = true;
+      b.style.opacity = '0.6';
       const id = b.dataset.entregar;
       const pedido = State.pedidos.find(p => p.id === id);
       try {
         await API.atualizarPedido(id, { statusEntrega: 'entregue' });
         pedido.statusEntrega = 'entregue';
         render();
-      } catch (e) { alert('Erro: ' + e.message); }
+      } catch (e) {
+        b.dataset.processando = '0';
+        b.disabled = false;
+        b.style.opacity = '1';
+        alert('Não foi possível marcar como entregue. Tente novamente.\n\nDetalhe: ' + e.message);
+      }
     };
   });
   document.querySelectorAll('[data-cancelar]').forEach(b => {
     b.onclick = async () => {
+      if (b.dataset.processando === '1') return;
       if (!confirm('Cancelar este pedido?')) return;
+      b.dataset.processando = '1';
+      b.disabled = true;
+      b.style.opacity = '0.6';
       const id = b.dataset.cancelar;
       const pedido = State.pedidos.find(p => p.id === id);
       try {
         await API.atualizarPedido(id, { statusEntrega: 'cancelado' });
         pedido.statusEntrega = 'cancelado';
         render();
-      } catch (e) { alert('Erro: ' + e.message); }
+      } catch (e) {
+        b.dataset.processando = '0';
+        b.disabled = false;
+        b.style.opacity = '1';
+        alert('Não foi possível cancelar. Tente novamente.\n\nDetalhe: ' + e.message);
+      }
     };
   });
 }
