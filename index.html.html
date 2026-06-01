@@ -617,6 +617,38 @@ input, textarea, select { font-family: inherit; }
 .produto-nome { font-weight: 700; }
 .produto-preco { color: var(--verde); font-weight: 700; }
 
+/* Combo destacado */
+.produto-combo {
+  position: relative;
+  background: linear-gradient(135deg, rgba(254,246,220,0.85), rgba(242,193,46,0.18));
+  border: 1.5px solid rgba(242,193,46,0.5);
+  border-top: 1.5px solid rgba(255,255,255,0.8);
+  padding-top: 22px;
+  box-shadow: 0 8px 28px rgba(242,193,46,0.18);
+}
+.produto-combo:hover {
+  box-shadow: 0 12px 36px rgba(242,193,46,0.28);
+}
+.combo-tag {
+  position: absolute;
+  top: 10px;
+  left: 14px;
+  background: var(--amarelo);
+  color: #7c4a03;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  padding: 3px 10px;
+  border-radius: 999px;
+  box-shadow: 0 2px 6px rgba(242,193,46,0.4);
+}
+.produto-combo .produto-preco { color: var(--turquesa-escuro); font-size: 17px; }
+.combo-desc {
+  font-size: 13px;
+  color: var(--pedra-600);
+  margin: 2px 0 2px;
+}
+
 .qtd-controls {
   display: flex; align-items: center; gap: 8px;
 }
@@ -1431,7 +1463,9 @@ function fromDBAluno(a) {
 function fromDBProduto(p) {
   return {
     id: p.id, nome: p.nome, preco: parseFloat(p.preco),
-    emoji: p.emoji, ativo: p.ativo, criadoEm: p.criado_em
+    emoji: p.emoji, ativo: p.ativo, criadoEm: p.criado_em,
+    ehCombo: p.eh_combo === true,
+    comboDescricao: p.combo_descricao || null
   };
 }
 function fromDBPedido(p) {
@@ -1539,14 +1573,16 @@ const API = {
   },
   async criarProduto(p) {
     const { data, error } = await db.from('produtos').insert({
-      nome: p.nome, preco: p.preco, emoji: p.emoji, ativo: p.ativo
+      nome: p.nome, preco: p.preco, emoji: p.emoji, ativo: p.ativo,
+      eh_combo: p.ehCombo || false, combo_descricao: p.comboDescricao || null
     }).select().single();
     if (error) throw error;
     return fromDBProduto(data);
   },
   async atualizarProduto(id, p) {
     const { error } = await db.from('produtos').update({
-      nome: p.nome, preco: p.preco, emoji: p.emoji, ativo: p.ativo
+      nome: p.nome, preco: p.preco, emoji: p.emoji, ativo: p.ativo,
+      eh_combo: p.ehCombo || false, combo_descricao: p.comboDescricao || null
     }).eq('id', id);
     if (error) throw error;
   },
@@ -2145,16 +2181,11 @@ function renderEtapaCardapio() {
   if (produtosAtivos.length === 0) {
     html += `<div class="empty">A lanchonete ainda não cadastrou produtos.</div>`;
   } else {
-    produtosAtivos.forEach(p => {
+    // Combos primeiro (destacados), depois os produtos normais
+    const ordenados = [...produtosAtivos].sort((a, b) => (b.ehCombo ? 1 : 0) - (a.ehCombo ? 1 : 0));
+    ordenados.forEach(p => {
       const qtd = State.carrinho[p.id] || 0;
-      html += `
-        <div class="produto-card">
-          <div class="produto-emoji">${p.emoji || '🍽️'}</div>
-          <div class="produto-info">
-            <div class="produto-nome">${escapeHTML(p.nome)}</div>
-            <div class="produto-preco">${formatBRL(p.preco)}</div>
-          </div>
-          ${qtd > 0 ? `
+      const controle = qtd > 0 ? `
             <div class="qtd-controls">
               <button class="qtd-btn" data-action="remover" data-id="${p.id}">−</button>
               <span class="qtd-num">${qtd}</span>
@@ -2164,9 +2195,32 @@ function renderEtapaCardapio() {
             <button class="btn btn-primary btn-sm" data-action="adicionar" data-id="${p.id}">
               Adicionar
             </button>
-          `}
-        </div>
-      `;
+          `;
+      if (p.ehCombo) {
+        html += `
+          <div class="produto-card produto-combo">
+            <div class="combo-tag">COMBO</div>
+            <div class="produto-emoji">${p.emoji || '🍔'}</div>
+            <div class="produto-info">
+              <div class="produto-nome">${escapeHTML(p.nome)}</div>
+              ${p.comboDescricao ? `<div class="combo-desc">${escapeHTML(p.comboDescricao)}</div>` : ''}
+              <div class="produto-preco">${formatBRL(p.preco)}</div>
+            </div>
+            ${controle}
+          </div>
+        `;
+      } else {
+        html += `
+          <div class="produto-card">
+            <div class="produto-emoji">${p.emoji || '🍽️'}</div>
+            <div class="produto-info">
+              <div class="produto-nome">${escapeHTML(p.nome)}</div>
+              <div class="produto-preco">${formatBRL(p.preco)}</div>
+            </div>
+            ${controle}
+          </div>
+        `;
+      }
     });
   }
 
@@ -3320,14 +3374,16 @@ function renderPainelProdutos() {
 
   State.produtos.forEach(p => {
     html += `
-      <div class="card" style="${p.ativo ? '' : 'opacity:0.55;'}">
+      <div class="card" style="${p.ativo ? '' : 'opacity:0.55;'}${p.ehCombo ? 'border-color:rgba(242,193,46,0.6);background:linear-gradient(135deg,rgba(254,246,220,0.5),var(--glass-bg));' : ''}">
         <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:12px;">
           <div style="font-size:46px;">${p.emoji || '🍽️'}</div>
           <button class="badge ${p.ativo ? 'badge-pago' : 'badge-entregue'}" data-toggle-produto="${p.id}" style="border:none;cursor:pointer;">
             ${p.ativo ? 'Ativo' : 'Pausado'}
           </button>
         </div>
+        ${p.ehCombo ? `<div style="display:inline-block;background:var(--amarelo);color:#7c4a03;font-size:10px;font-weight:800;letter-spacing:0.08em;padding:3px 10px;border-radius:999px;margin-bottom:6px;">COMBO</div>` : ''}
         <div style="font-weight:700;font-size:18px;">${escapeHTML(p.nome)}</div>
+        ${p.ehCombo && p.comboDescricao ? `<div style="font-size:13px;color:var(--pedra-600);margin-bottom:2px;">${escapeHTML(p.comboDescricao)}</div>` : ''}
         <div class="serif" style="font-size:24px;font-weight:800;color:var(--verde);margin-bottom:12px;">${formatBRL(p.preco)}</div>
         <div style="display:flex;gap:6px;">
           <button class="btn btn-secondary btn-sm" style="flex:1;" data-edit-produto="${p.id}">Editar</button>
@@ -3394,6 +3450,15 @@ function abrirModalProduto(prod) {
               <input type="checkbox" id="prod-ativo" ${(prod?.ativo ?? true) ? 'checked' : ''} style="width:16px;height:16px;accent-color:var(--turquesa);">
               Disponível para venda
             </label>
+            <label class="flex items-center gap-2" style="font-size:14px;margin-top:10px;">
+              <input type="checkbox" id="prod-combo" ${prod?.ehCombo ? 'checked' : ''} style="width:16px;height:16px;accent-color:var(--amarelo);">
+              <strong>É um combo</strong> (aparece destacado no cardápio)
+            </label>
+            <div class="form-group" id="combo-desc-wrap" style="margin-top:10px;${prod?.ehCombo ? '' : 'display:none;'}">
+              <label class="form-label">O que vem no combo</label>
+              <input type="text" class="form-input" id="prod-combo-desc" value="${escapeHTML(prod?.comboDescricao || '')}" placeholder="Ex: Pão de queijo + Suco natural">
+              <p style="font-size:12px;color:var(--pedra-500);margin-top:4px;">Essa frase aparece abaixo do nome do combo para o responsável.</p>
+            </div>
             <div id="alerta-produto"></div>
             <div class="modal-acoes">
               <button type="button" class="btn btn-secondary" id="cancelar-produto">Cancelar</button>
@@ -3406,6 +3471,12 @@ function abrirModalProduto(prod) {
     bind: () => {
       document.getElementById('modal-bg').onclick = fecharModal;
       document.getElementById('cancelar-produto').onclick = fecharModal;
+      // Mostra/oculta o campo de descrição do combo conforme o checkbox
+      const chkCombo = document.getElementById('prod-combo');
+      const descWrap = document.getElementById('combo-desc-wrap');
+      chkCombo.addEventListener('change', () => {
+        descWrap.style.display = chkCombo.checked ? '' : 'none';
+      });
       document.getElementById('form-produto').onsubmit = async e => {
         e.preventDefault();
         const nome = document.getElementById('prod-nome').value.trim();
@@ -3413,6 +3484,8 @@ function abrirModalProduto(prod) {
         const precoStr = document.getElementById('prod-preco').value.replace(',', '.');
         const preco = parseFloat(precoStr);
         const ativo = document.getElementById('prod-ativo').checked;
+        const ehCombo = document.getElementById('prod-combo').checked;
+        const comboDescricao = document.getElementById('prod-combo-desc').value.trim();
         const alerta = document.getElementById('alerta-produto');
         alerta.innerHTML = '';
 
@@ -3420,14 +3493,19 @@ function abrirModalProduto(prod) {
           alerta.innerHTML = `<div class="alert alert-erro">${Icons.alert}<span>Preencha nome e preço válido.</span></div>`;
           return;
         }
+        if (ehCombo && !comboDescricao) {
+          alerta.innerHTML = `<div class="alert alert-erro">${Icons.alert}<span>Descreva o que vem no combo (ex: Pão de queijo + Suco).</span></div>`;
+          return;
+        }
 
         try {
           if (ehNovo) {
-            const novoProd = await API.criarProduto({ nome, emoji, preco, ativo });
+            const novoProd = await API.criarProduto({ nome, emoji, preco, ativo, ehCombo, comboDescricao });
             State.produtos.push(novoProd);
           } else {
-            await API.atualizarProduto(prod.id, { nome, emoji, preco, ativo });
+            await API.atualizarProduto(prod.id, { nome, emoji, preco, ativo, ehCombo, comboDescricao });
             prod.nome = nome; prod.emoji = emoji; prod.preco = preco; prod.ativo = ativo;
+            prod.ehCombo = ehCombo; prod.comboDescricao = comboDescricao;
           }
           fecharModal();
           render();
