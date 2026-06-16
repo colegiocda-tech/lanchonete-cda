@@ -1120,9 +1120,46 @@ input, textarea, select { font-family: inherit; }
   box-shadow: 0 4px 16px rgba(242,193,46,0.12);
 }
 
-/* ============================================================
-   RESPONSIVO - MOBILE (até 768px)
-   ============================================================ */
+/* Aviso leve de antecedência (lembrete suave, sempre visível) */
+.aviso-leve {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: rgba(38,183,201,0.08);
+  border: 1px solid rgba(38,183,201,0.25);
+  border-radius: 14px;
+  padding: 11px 14px;
+  margin-bottom: 18px;
+  font-size: 13px;
+  color: var(--turquesa-escuro);
+}
+.aviso-leve svg { width: 18px; height: 18px; flex-shrink: 0; opacity: 0.8; }
+
+/* Aviso crítico de antecedência (janela final, destacado) */
+.aviso-critico {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  background: linear-gradient(135deg, rgba(230,57,70,0.12), rgba(242,193,46,0.12));
+  border: 1.5px solid rgba(230,57,70,0.4);
+  border-radius: 16px;
+  padding: 14px 16px;
+  margin-bottom: 18px;
+  font-size: 14px;
+  color: var(--vermelho-escuro);
+  line-height: 1.45;
+  box-shadow: 0 6px 20px rgba(230,57,70,0.15);
+  animation: pulso-aviso 2s ease-in-out infinite;
+}
+.aviso-critico svg { width: 24px; height: 24px; flex-shrink: 0; color: var(--vermelho); margin-top: 1px; }
+.aviso-critico strong { display: block; margin-bottom: 2px; }
+@keyframes pulso-aviso {
+  0%, 100% { box-shadow: 0 6px 20px rgba(230,57,70,0.15); }
+  50% { box-shadow: 0 6px 28px rgba(230,57,70,0.3); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .aviso-critico { animation: none; }
+}
 @media (max-width: 768px) {
   /* Tipografia */
   .page-titulo { font-size: 26px; }
@@ -1354,6 +1391,67 @@ input, textarea, select { font-family: inherit; }
     animation: none;
   }
 }
+
+/* ============================================================
+   CALENDÁRIO RESPONSIVO
+   ============================================================ */
+.cal-desktop { display: block; }
+.cal-mobile { display: none; }
+
+.cal-card {
+  background: var(--glass-bg);
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
+  border: 1px solid var(--glass-borda);
+  border-radius: 18px;
+  padding: 16px;
+  margin-bottom: 12px;
+  box-shadow: var(--glass-sombra);
+}
+.cal-card-vazio { border-color: rgba(230,57,70,0.35); }
+.cal-card-head {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 14px;
+}
+.cal-dias {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 8px;
+}
+.cal-pilula {
+  padding: 12px 4px;
+  border-radius: 12px;
+  border: 1.5px solid var(--pedra-200);
+  background: var(--pedra-50);
+  color: var(--pedra-500);
+  font-weight: 700;
+  font-size: 13px;
+  transition: all 0.2s;
+  position: relative;
+}
+.cal-pilula.on {
+  background: linear-gradient(135deg, var(--turquesa), var(--turquesa-escuro));
+  color: white;
+  border-color: transparent;
+  box-shadow: 0 4px 12px rgba(38,183,201,0.3);
+}
+.cal-pilula.hoje::after {
+  content: '•';
+  position: absolute;
+  top: 2px;
+  right: 6px;
+  color: var(--amarelo);
+  font-size: 16px;
+  line-height: 1;
+}
+.cal-pilula.on.hoje::after { color: white; }
+
+@media (max-width: 700px) {
+  .cal-desktop { display: none; }
+  .cal-mobile { display: block; }
+}
 </style>
 </head>
 <body>
@@ -1438,6 +1536,8 @@ const State = {
   buscaAlunosAdmin: '',
   buscaPaisAdmin: '',
   modalAberto: null,
+  atualizacaoPendente: false,
+  buscaProducao: '',
   carregando: false
 };
 
@@ -1511,14 +1611,52 @@ async function carregarTudo() {
   }
 }
 
+// D: som curto de notificação (dois tons), gerado pelo navegador, sem arquivo externo
+function tocarSomNovoPedido() {
+  try {
+    const ctx = window._audioCtx || (window._audioCtx = new (window.AudioContext || window.webkitAudioContext)());
+    if (ctx.state === 'suspended') ctx.resume();
+    const agora = ctx.currentTime;
+    [[880, 0], [1174.66, 0.12]].forEach(([freq, t]) => {
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.type = 'sine';
+      osc.frequency.value = freq;
+      gain.gain.setValueAtTime(0.0001, agora + t);
+      gain.gain.exponentialRampToValueAtTime(0.18, agora + t + 0.02);
+      gain.gain.exponentialRampToValueAtTime(0.0001, agora + t + 0.25);
+      osc.connect(gain).connect(ctx.destination);
+      osc.start(agora + t);
+      osc.stop(agora + t + 0.3);
+    });
+  } catch (e) { /* som é opcional; se o navegador bloquear, segue sem */ }
+}
+
 // Configura listener em tempo real para sincronização entre dispositivos
 function ativarRealtime() {
   if (!db) return;
+
+  // D: aviso imediato (toast + som) quando um NOVO pedido chega, para o admin
+  db.channel('novo-pedido-alerta')
+    .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'pedidos' }, () => {
+      if (State.sessao?.tipo === 'admin') {
+        tocarSomNovoPedido();
+        mostrarToast('🔔 Novo pedido recebido!');
+      }
+    })
+    .subscribe();
 
   ['pais', 'alunos', 'produtos', 'pedidos'].forEach(tabela => {
     db.channel('public:' + tabela)
       .on('postgres_changes', { event: '*', schema: 'public', table: tabela }, async () => {
         await carregarTudo();
+        // Se há um modal aberto (admin editando algo) ou o pai está no meio de um
+        // pedido, NÃO re-renderiza agora para não atrapalhar/duplicar a tela.
+        // Marca que há atualização pendente e aplica quando for seguro.
+        if (State.modalAberto || (State.sessao?.tipo === 'pai' && State.pedidoEtapa !== 'aluno' && State.pedidoEtapa !== 'sucesso')) {
+          State.atualizacaoPendente = true;
+          return;
+        }
         render();
       })
       .subscribe();
@@ -1624,7 +1762,16 @@ const API = {
 /* ============================================================
    HELPERS
    ============================================================ */
-const HOJE = () => new Date().toISOString().split('T')[0];
+// Data de hoje no fuso LOCAL do navegador (YYYY-MM-DD).
+// Não usar toISOString() aqui: ele converte para UTC e, à noite no Brasil (UTC-3),
+// retornaria o dia seguinte, desalinhando dos pedidos e do calendário (getDay).
+const HOJE = () => {
+  const d = new Date();
+  const ano = d.getFullYear();
+  const mes = String(d.getMonth() + 1).padStart(2, '0');
+  const dia = String(d.getDate()).padStart(2, '0');
+  return `${ano}-${mes}-${dia}`;
+};
 
 const formatBRL = v => new Intl.NumberFormat('pt-BR', {
   style: 'currency', currency: 'BRL'
@@ -1660,9 +1807,9 @@ function diaDaSemanaHoje() {
 }
 
 // Um produto está disponível em determinado dia?
-// Regra: sem dias definidos (null/vazio) = disponível todos os dias (fallback seguro)
+// Regra: sem nenhum dia marcado = NÃO aparece (o admin controla o que mostra).
 function produtoDisponivelNoDia(produto, dia) {
-  if (!produto.dias || produto.dias.length === 0) return true;
+  if (!produto.dias || produto.dias.length === 0) return false;
   return produto.dias.includes(dia);
 }
 
@@ -1672,6 +1819,52 @@ function produtosDeHoje() {
   const ativos = State.produtos.filter(p => p.ativo);
   if (dia === null) return ativos; // fim de semana: não filtra
   return ativos.filter(p => produtoDisponivelNoDia(p, dia));
+}
+
+/* ============================================================
+   AVISO DE ANTECEDÊNCIA (não bloqueia, só avisa)
+   ============================================================ */
+// Horários dos intervalos e o limite de antecedência (30 min antes)
+const INTERVALOS = [
+  { nome: 'manhã', intervaloMin: 9 * 60,  limiteMin: 8 * 60 + 30 },  // intervalo 9h, limite 8h30
+  { nome: 'tarde', intervaloMin: 15 * 60, limiteMin: 14 * 60 + 30 }, // intervalo 15h, limite 14h30
+];
+
+// Retorna o estado do aviso conforme a hora atual:
+//  { nivel: 'critico', turno: 'manhã' }  -> dentro da janela final (limite até intervalo)
+//  { nivel: 'leve' }                      -> fora da janela, lembrete suave
+function estadoAvisoAntecedencia() {
+  const agora = new Date();
+  const minutosAgora = agora.getHours() * 60 + agora.getMinutes();
+  // Está dentro de alguma janela crítica? (entre o limite e o horário do intervalo)
+  for (const it of INTERVALOS) {
+    if (minutosAgora >= it.limiteMin && minutosAgora < it.intervaloMin) {
+      return { nivel: 'critico', turno: it.nome };
+    }
+  }
+  return { nivel: 'leve' };
+}
+
+// HTML do aviso para mostrar no cardápio do pai
+function htmlAvisoAntecedencia() {
+  const estado = estadoAvisoAntecedencia();
+  if (estado.nivel === 'critico') {
+    return `
+      <div class="aviso-critico">
+        ${Icons.alert}
+        <div>
+          <strong>Faltam poucos minutos para o intervalo da ${estado.turno}!</strong>
+          Peça agora para dar tempo de preparar e entregar o lanche no horário do recreio.
+        </div>
+      </div>
+    `;
+  }
+  return `
+    <div class="aviso-leve">
+      ${Icons.clock || Icons.alert}
+      <span>Lembre-se de pedir o lanche com antecedência (até 8h30 para o intervalo da manhã ou 14h30 para o da tarde) para garantir a entrega no recreio.</span>
+    </div>
+  `;
 }
 
 // Hash bem simples (NÃO é seguro - use só como "ofuscação")
@@ -1825,6 +2018,11 @@ function render() {
 function fecharModal() {
   document.querySelectorAll('.modal-bg').forEach(m => m.remove());
   State.modalAberto = null;
+  // Se chegou atualização em tempo real enquanto o modal estava aberto, aplica agora
+  if (State.atualizacaoPendente) {
+    State.atualizacaoPendente = false;
+    render();
+  }
 }
 
 /* ============================================================
@@ -1995,7 +2193,7 @@ function renderDefinirSenha() {
             <label class="form-label">Nova senha</label>
             <div style="position:relative;">
               <input type="password" class="form-input" id="nova-senha" placeholder="Crie uma senha" autocomplete="new-password">
-              <button type="button" id="toggle-nova" style="position:absolute;right:12px;top:50%;transform:translateY(-50%);color:var(--pedra-500);">${Icons.eye}</button>
+              <button type="button" id="toggle-nova" aria-label="Mostrar ou ocultar senha" style="position:absolute;right:12px;top:50%;transform:translateY(-50%);color:var(--pedra-500);">${Icons.eye}</button>
             </div>
           </div>
           <div id="medidor-senha" style="margin-bottom:14px;"></div>
@@ -2152,6 +2350,11 @@ function bindAppPai() {
   document.getElementById('btn-logout-pai').onclick = logout;
   document.querySelectorAll('.tab').forEach(t => {
     t.onclick = () => {
+      // A: se há itens no carrinho e o pedido não foi concluído, confirma antes de descartar
+      const temCarrinho = Object.values(State.carrinho).some(q => q > 0);
+      if (temCarrinho && State.pedidoEtapa !== 'sucesso' && t.dataset.aba !== State.abaPai) {
+        if (!confirm('Você tem itens no carrinho que ainda não foram reservados. Se sair agora, o carrinho será esvaziado.\n\nDeseja sair mesmo assim?')) return;
+      }
       State.abaPai = t.dataset.aba;
       // Reset wizard se voltar para novo pedido
       if (State.abaPai === 'novoPedido') {
@@ -2161,6 +2364,7 @@ function bindAppPai() {
         State.observacaoPedido = '';
         State.pedidoFinalId = null;
       }
+      State.atualizacaoPendente = false; // já vamos re-renderizar com dados atuais
       render();
     };
   });
@@ -2264,6 +2468,7 @@ function renderEtapaCardapio() {
     </div>
     <h1 class="page-titulo" style="font-size:28px;">Cardápio do recreio</h1>
     <p class="page-subtitulo">Escolha o que vai na lancheira.</p>
+    ${htmlAvisoAntecedencia()}
   `;
 
   if (produtosAtivos.length === 0) {
@@ -2518,6 +2723,23 @@ async function finalizarPedido() {
   const itensCarrinho = produtosAtivos.filter(p => State.carrinho[p.id] > 0);
   const total = itensCarrinho.reduce((s,p) => s + p.preco * State.carrinho[p.id], 0);
 
+  // Guarda contra pedido inválido (aluno sumiu, ou carrinho esvaziou porque
+  // um item saiu do cardápio enquanto o pai montava o pedido)
+  if (!aluno) {
+    alert('Não foi possível identificar o aluno. Volte e selecione novamente.');
+    State.pedidoEtapa = 'aluno';
+    const btn = document.getElementById('btn-confirmar-pedido');
+    if (btn) { btn.dataset.processando = '0'; btn.disabled = false; btn.style.opacity = '1'; btn.textContent = 'Confirmar reserva'; }
+    render();
+    return;
+  }
+  if (itensCarrinho.length === 0 || total <= 0) {
+    alert('Seu carrinho está vazio ou os itens não estão mais disponíveis hoje. Adicione lanches antes de confirmar.');
+    State.pedidoEtapa = 'cardapio';
+    render();
+    return;
+  }
+
   const pedidoData = {
     alunoId: aluno.id,
     paiId: State.sessao.userId,
@@ -2603,7 +2825,7 @@ function renderMeusPedidos(pai, meusFilhos) {
     const aluno = State.alunos.find(a => a.id === p.alunoId);
     const mensagem = mensagemWhatsApp(p, aluno);
     const linkWA = `https://wa.me/${CONFIG.WHATSAPP_NUMERO}?text=${encodeURIComponent(mensagem)}`;
-    const itensTxt = p.itens.map(i => `${i.emoji || '🍽️'} ${i.nome} ×${i.quantidade}`).join(' · ');
+    const itensTxt = p.itens.map(i => `${escapeHTML(i.emoji || '🍽️')} ${escapeHTML(i.nome)} ×${i.quantidade}`).join(' · ');
 
     html += `
       <div class="pedido-card">
@@ -2840,8 +3062,9 @@ function renderPainelProducao() {
 
     <div class="grid-2">
       <div class="card">
-        <h2 style="font-size:18px;font-weight:800;margin-bottom:14px;display:flex;align-items:center;gap:8px;color:var(--turquesa);">
-          ${Icons.chefHat} Para preparar
+        <h2 style="font-size:18px;font-weight:800;margin-bottom:14px;display:flex;align-items:center;justify-content:space-between;gap:8px;color:var(--turquesa);">
+          <span style="display:flex;align-items:center;gap:8px;">${Icons.chefHat} Para preparar</span>
+          ${totalLanches > 0 ? `<span style="background:var(--amarelo);color:#7c4a03;font-size:13px;font-weight:800;padding:4px 12px;border-radius:999px;">${totalLanches} ${totalLanches === 1 ? 'unidade' : 'unidades'}</span>` : ''}
         </h2>
   `;
 
@@ -2850,10 +3073,10 @@ function renderPainelProducao() {
   } else {
     producao.forEach(p => {
       html += `
-        <div style="display:flex;align-items:center;gap:14px;background:var(--pedra-50);padding:12px;border-radius:12px;margin-bottom:8px;">
-          <div style="font-size:30px;display:flex;align-items:center;">${iconeProduto(p, 'sm')}</div>
-          <div style="flex:1;font-weight:700;">${escapeHTML(p.nome)}</div>
-          <div class="serif" style="font-size:30px;font-weight:800;color:var(--verde);">${p.quantidade}</div>
+        <div style="display:flex;align-items:center;gap:14px;background:var(--pedra-50);padding:14px 16px;border-radius:14px;margin-bottom:8px;border-left:4px solid var(--turquesa);">
+          <div style="font-size:32px;display:flex;align-items:center;">${iconeProduto(p, 'md')}</div>
+          <div style="flex:1;font-weight:800;font-size:17px;">${escapeHTML(p.nome)}</div>
+          <div class="serif" style="font-size:38px;font-weight:800;color:var(--verde);line-height:1;">${p.quantidade}</div>
         </div>
       `;
     });
@@ -2865,13 +3088,25 @@ function renderPainelProducao() {
         <h2 style="font-size:18px;font-weight:800;margin-bottom:14px;display:flex;align-items:center;gap:8px;color:var(--turquesa);">
           ${Icons.users} Pedidos por aluno
         </h2>
+        <div class="search-box">
+          ${Icons.search}
+          <input type="text" class="form-input" id="busca-producao" placeholder="Buscar aluno ou turma..." value="${escapeHTML(State.buscaProducao)}">
+        </div>
         <div style="max-height:600px;overflow-y:auto;">
   `;
 
-  if (pedidosHoje.length === 0) {
-    html += `<p style="text-align:center;color:var(--pedra-500);padding:24px 0;">Sem pedidos ainda.</p>`;
+  // B: aplica o filtro de busca (nome do aluno ou turma)
+  const termo = State.buscaProducao.trim().toLowerCase();
+  const pedidosFiltrados = !termo ? pedidosHoje : pedidosHoje.filter(p => {
+    const aluno = State.alunos.find(a => a.id === p.alunoId);
+    return (aluno?.nome || '').toLowerCase().includes(termo) ||
+           (aluno?.turma || '').toLowerCase().includes(termo);
+  });
+
+  if (pedidosFiltrados.length === 0) {
+    html += `<p style="text-align:center;color:var(--pedra-500);padding:24px 0;">${termo ? 'Nenhum pedido encontrado para "' + escapeHTML(State.buscaProducao) + '".' : 'Sem pedidos ainda.'}</p>`;
   } else {
-    pedidosHoje.forEach(p => {
+    pedidosFiltrados.forEach(p => {
       const aluno = State.alunos.find(a => a.id === p.alunoId);
       const cls = p.statusEntrega === 'entregue' ? 'entregue' : (p.statusEntrega === 'cancelado' ? 'cancelado' : '');
       html += `
@@ -2887,7 +3122,7 @@ function renderPainelProducao() {
             </div>
           </div>
           <div class="pedido-itens">
-            ${p.itens.map(i => `<div>${i.emoji || '🍽️'} ${escapeHTML(i.nome)} × ${i.quantidade}</div>`).join('')}
+            ${p.itens.map(i => `<div>${escapeHTML(i.emoji || '🍽️')} ${escapeHTML(i.nome)} × ${i.quantidade}</div>`).join('')}
           </div>
           ${aluno?.observacoesMedicas ? `<div class="pedido-obs pedido-obs-medica">⚠️ ATENÇÃO MÉDICA: ${escapeHTML(aluno.observacoesMedicas)}</div>` : ''}
           ${p.observacao ? `<div class="pedido-obs">📝 ${escapeHTML(p.observacao)}</div>` : ''}
@@ -2895,6 +3130,7 @@ function renderPainelProducao() {
             <span style="font-weight:800;color:var(--verde);">${formatBRL(p.total)}</span>
             ${p.statusEntrega === 'reservado' ? `
               <div class="pedido-acoes">
+                ${p.statusPagamento === 'pendente' ? `<button class="btn btn-amarelo btn-sm" data-pagar="${p.id}">$ Pago</button>` : ''}
                 <button class="btn btn-secondary btn-sm" data-cancelar="${p.id}">Cancelar</button>
                 <button class="btn btn-success btn-sm" data-entregar="${p.id}">${Icons.check} Entregue</button>
               </div>
@@ -2914,6 +3150,44 @@ function renderPainelProducao() {
 }
 
 function bindPainelProducao() {
+  // B: busca por aluno/turma (debounce pra não re-renderizar a cada tecla)
+  const busca = document.getElementById('busca-producao');
+  if (busca) {
+    busca.oninput = () => {
+      State.buscaProducao = busca.value;
+      clearTimeout(window._buscaTimer);
+      window._buscaTimer = setTimeout(() => {
+        render();
+        // devolve o foco ao campo depois do re-render
+        const b2 = document.getElementById('busca-producao');
+        if (b2) { b2.focus(); const fim = b2.value.length; b2.setSelectionRange(fim, fim); }
+      }, 250);
+    };
+  }
+
+  // E: marcar pagamento como pago direto da produção
+  document.querySelectorAll('[data-pagar]').forEach(b => {
+    b.onclick = async () => {
+      if (b.dataset.processando === '1') return;
+      b.dataset.processando = '1';
+      b.disabled = true;
+      b.style.opacity = '0.6';
+      const id = b.dataset.pagar;
+      const pedido = State.pedidos.find(p => p.id === id);
+      try {
+        await API.atualizarPedido(id, { statusPagamento: 'pago' });
+        if (pedido) pedido.statusPagamento = 'pago';
+        mostrarToast('Pagamento registrado!');
+        render();
+      } catch (e) {
+        b.dataset.processando = '0';
+        b.disabled = false;
+        b.style.opacity = '1';
+        alert('Não foi possível registrar o pagamento. Tente novamente.\n\nDetalhe: ' + e.message);
+      }
+    };
+  });
+
   document.querySelectorAll('[data-entregar]').forEach(b => {
     b.onclick = async () => {
       if (b.dataset.processando === '1') return;
@@ -3037,7 +3311,7 @@ function bindPainelPagamentos() {
         await API.atualizarPedido(pedido.id, { statusPagamento: 'pago' });
         pedido.statusPagamento = 'pago';
         render();
-      } catch (e) { alert('Erro: ' + e.message); }
+      } catch (e) { alert('Não foi possível registrar o pagamento. Verifique sua conexão e tente novamente.'); }
     };
   });
   document.querySelectorAll('[data-desfazer]').forEach(b => {
@@ -3047,7 +3321,7 @@ function bindPainelPagamentos() {
         await API.atualizarPedido(pedido.id, { statusPagamento: 'pendente' });
         pedido.statusPagamento = 'pendente';
         render();
-      } catch (e) { alert('Erro: ' + e.message); }
+      } catch (e) { alert('Não foi possível alterar o pagamento. Verifique sua conexão e tente novamente.'); }
     };
   });
 }
@@ -3142,16 +3416,19 @@ function bindPainelPais() {
   document.querySelectorAll('[data-del-pai]').forEach(b => {
     b.onclick = async () => {
       const pai = State.pais.find(p => p.id === b.dataset.delPai);
-      const numFilhos = State.alunos.filter(a => a.responsavelId === pai.id).length;
-      const aviso = numFilhos > 0
-        ? `Esse responsável tem ${numFilhos} filho(s) cadastrado(s). Eles ficarão sem responsável vinculado. Continuar?`
-        : 'Excluir esse responsável?';
-      if (!confirm(aviso)) return;
+      const filhos = State.alunos.filter(a => a.responsavelId === pai.id);
+      // Impede deixar alunos órfãos: exige remover/reatribuir os filhos antes
+      if (filhos.length > 0) {
+        const nomes = filhos.map(f => f.nome).join(', ');
+        alert(`Não dá para excluir este responsável porque ele tem ${filhos.length} aluno(s) vinculado(s):\n\n${nomes}\n\nPrimeiro vá na aba Alunos e exclua (ou edite, vinculando a outro responsável) esses alunos. Depois exclua o responsável.`);
+        return;
+      }
+      if (!confirm(`Excluir o responsável ${pai.nome}? Esta ação não pode ser desfeita.`)) return;
       try {
         await API.excluirPai(pai.id);
         State.pais = State.pais.filter(p => p.id !== pai.id);
         render();
-      } catch (e) { alert('Erro: ' + e.message); }
+      } catch (e) { alert('Não foi possível excluir o responsável. Verifique sua conexão e tente novamente.'); }
     };
   });
 }
@@ -3233,9 +3510,22 @@ function abrirModalPai(pai) {
           return;
         }
         if (email) {
+          // Valida formato básico de email
+          if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+            alerta.innerHTML = `<div class="alert alert-erro">${Icons.alert}<span>O email informado não parece válido. Verifique ou deixe em branco.</span></div>`;
+            return;
+          }
           const emailEmUso = State.pais.find(p => p.email === email && p.id !== pai?.id);
           if (emailEmUso) {
             alerta.innerHTML = `<div class="alert alert-erro">${Icons.alert}<span>Esse email já está em uso por outro responsável.</span></div>`;
+            return;
+          }
+        }
+        if (telefone) {
+          // Conta só os dígitos. Brasil: 10 (fixo) ou 11 (celular) dígitos.
+          const digitos = telefone.replace(/\D/g, '');
+          if (digitos.length < 10 || digitos.length > 11) {
+            alerta.innerHTML = `<div class="alert alert-erro">${Icons.alert}<span>O telefone deve ter DDD + número (10 ou 11 dígitos). Ex: (61) 99999-9999.</span></div>`;
             return;
           }
         }
@@ -3331,7 +3621,7 @@ function renderPainelAlunos() {
           <td data-label="Total pago" class="text-right vermelho">${formatBRL(totalGasto(a.id))}</td>
           <td class="text-right">
             <button class="btn btn-secondary btn-sm" data-edit-aluno="${a.id}">Editar</button>
-            <button class="btn btn-icon" style="color:var(--vermelho);" data-del-aluno="${a.id}" title="Excluir">${Icons.trash}</button>
+            <button class="btn btn-icon" style="color:var(--vermelho);" data-del-aluno="${a.id}" aria-label="Excluir ${escapeHTML(a.nome)}" title="Excluir">${Icons.trash}</button>
           </td>
         </tr>
       `;
@@ -3366,7 +3656,7 @@ function bindPainelAlunos() {
         await API.excluirAluno(b.dataset.delAluno);
         State.alunos = State.alunos.filter(a => a.id !== b.dataset.delAluno);
         render();
-      } catch (e) { alert('Erro: ' + e.message); }
+      } catch (e) { alert('Não foi possível excluir o aluno. Verifique sua conexão e tente novamente.'); }
     };
   });
 }
@@ -3473,7 +3763,7 @@ function renderPainelProdutos() {
       <div class="card" style="${p.ativo ? '' : 'opacity:0.55;'}${p.ehCombo ? 'border-color:rgba(242,193,46,0.6);background:linear-gradient(135deg,rgba(254,246,220,0.5),var(--glass-bg));' : ''}">
         <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:12px;">
           <div style="font-size:46px;display:flex;align-items:center;">${iconeProduto(p, 'lg')}</div>
-          <button class="badge ${p.ativo ? 'badge-pago' : 'badge-entregue'}" data-toggle-produto="${p.id}" style="border:none;cursor:pointer;">
+          <button class="badge ${p.ativo ? 'badge-pago' : 'badge-entregue'}" data-toggle-produto="${p.id}" aria-label="${p.ativo ? 'Pausar' : 'Ativar'} ${escapeHTML(p.nome)}" style="border:none;cursor:pointer;">
             ${p.ativo ? 'Ativo' : 'Pausado'}
           </button>
         </div>
@@ -3483,7 +3773,7 @@ function renderPainelProdutos() {
         <div class="serif" style="font-size:24px;font-weight:800;color:var(--verde);margin-bottom:12px;">${formatBRL(p.preco)}</div>
         <div style="display:flex;gap:6px;">
           <button class="btn btn-secondary btn-sm" style="flex:1;" data-edit-produto="${p.id}">Editar</button>
-          <button class="btn btn-icon" style="color:var(--vermelho);" data-del-produto="${p.id}">${Icons.trash}</button>
+          <button class="btn btn-icon" style="color:var(--vermelho);" data-del-produto="${p.id}" aria-label="Excluir ${escapeHTML(p.nome)}" title="Excluir">${Icons.trash}</button>
         </div>
       </div>
     `;
@@ -3505,7 +3795,7 @@ function bindPainelProdutos() {
         await API.atualizarProduto(p.id, { ...p, ativo: !p.ativo });
         p.ativo = !p.ativo;
         render();
-      } catch (e) { alert('Erro: ' + e.message); }
+      } catch (e) { alert('Não foi possível alterar o produto. Verifique sua conexão e tente novamente.'); }
     };
   });
   document.querySelectorAll('[data-del-produto]').forEach(b => {
@@ -3515,7 +3805,7 @@ function bindPainelProdutos() {
         await API.excluirProduto(b.dataset.delProduto);
         State.produtos = State.produtos.filter(p => p.id !== b.dataset.delProduto);
         render();
-      } catch (e) { alert('Erro: ' + e.message); }
+      } catch (e) { alert('Não foi possível excluir o produto. Verifique sua conexão e tente novamente.'); }
     };
   });
 }
@@ -3624,7 +3914,7 @@ function renderPainelCalendario() {
 
     <div class="aviso" style="margin-bottom:20px;">
       ${Icons.alert}
-      <span><strong>Como funciona:</strong> se um lanche não tiver nenhum dia marcado, ele aparece <strong>todos os dias</strong> (assim ninguém fica sem cardápio por engano). Marque os dias para limitar a um cardápio específico.</span>
+      <span><strong>Importante:</strong> o lanche só aparece para os pais nos dias que você marcar. Lanche <strong>sem nenhum dia marcado não aparece</strong> no cardápio.</span>
     </div>
   `;
 
@@ -3634,7 +3924,8 @@ function renderPainelCalendario() {
     return html;
   }
 
-  html += `<div class="tabela-wrap"><table class="tabela tabela-calendario"><thead><tr>
+  // ===== VERSÃO DESKTOP: tabela (escondida no mobile) =====
+  html += `<div class="cal-desktop"><div class="tabela-wrap"><table class="tabela tabela-calendario"><thead><tr>
     <th style="min-width:160px;">Lanche</th>`;
   DIAS_SEMANA.forEach(d => {
     const hojeMarca = d.num === hoje ? ' style="color:var(--turquesa);"' : '';
@@ -3650,7 +3941,7 @@ function renderPainelCalendario() {
           <span style="font-size:22px;display:flex;">${iconeProduto(p, 'sm')}</span>
           <div>
             <div style="font-weight:600;">${escapeHTML(p.nome)}${p.ehCombo ? ' <span style="font-size:10px;background:var(--amarelo);color:#7c4a03;padding:1px 6px;border-radius:999px;font-weight:800;">COMBO</span>' : ''}</div>
-            ${semDias ? '<div style="font-size:11px;color:var(--verde);font-weight:600;">Todos os dias</div>' : ''}
+            ${semDias ? '<div style="font-size:11px;color:var(--vermelho);font-weight:600;">⚠ Não aparece (sem dias marcados)</div>' : ''}
           </div>
         </div>
       </td>`;
@@ -3658,50 +3949,91 @@ function renderPainelCalendario() {
       const marcado = p.dias && p.dias.includes(d.num);
       html += `<td style="text-align:center;">
         <input type="checkbox" class="chk-dia" data-produto="${p.id}" data-dia="${d.num}" ${marcado ? 'checked' : ''}
+          aria-label="${escapeHTML(p.nome)} - ${d.nome}"
           style="width:20px;height:20px;accent-color:var(--turquesa);cursor:pointer;">
       </td>`;
     });
     html += `</tr>`;
   });
-  html += `</tbody></table></div>`;
+  html += `</tbody></table></div></div>`;
+
+  // ===== VERSÃO MOBILE: cards com pílulas de dia nomeadas (escondida no desktop) =====
+  html += `<div class="cal-mobile">`;
+  produtos.forEach(p => {
+    const semDias = !p.dias || p.dias.length === 0;
+    html += `
+      <div class="cal-card ${semDias ? 'cal-card-vazio' : ''}">
+        <div class="cal-card-head">
+          <span style="font-size:26px;display:flex;">${iconeProduto(p, 'md')}</span>
+          <div style="flex:1;min-width:0;">
+            <div style="font-weight:700;">${escapeHTML(p.nome)}${p.ehCombo ? ' <span style="font-size:10px;background:var(--amarelo);color:#7c4a03;padding:1px 6px;border-radius:999px;font-weight:800;">COMBO</span>' : ''}</div>
+            ${semDias ? '<div style="font-size:12px;color:var(--vermelho);font-weight:600;margin-top:2px;">⚠ Não aparece no cardápio</div>' : ''}
+          </div>
+        </div>
+        <div class="cal-dias">`;
+    DIAS_SEMANA.forEach(d => {
+      const marcado = p.dias && p.dias.includes(d.num);
+      const ehHoje = d.num === hoje;
+      html += `
+          <button type="button" class="cal-pilula ${marcado ? 'on' : ''} ${ehHoje ? 'hoje' : ''}"
+            data-produto="${p.id}" data-dia="${d.num}"
+            aria-label="${escapeHTML(p.nome)} - ${d.nome}" aria-pressed="${marcado ? 'true' : 'false'}">
+            ${d.curto}
+          </button>`;
+    });
+    html += `
+        </div>
+      </div>`;
+  });
+  html += `</div>`;
 
   html += `
     <div style="margin-top:18px;display:flex;gap:10px;flex-wrap:wrap;">
       <button class="btn btn-secondary btn-sm" id="cal-marcar-todos">Marcar todos os dias em tudo</button>
-      <button class="btn btn-secondary btn-sm" id="cal-limpar-todos">Limpar tudo (volta pra "todos os dias")</button>
+      <button class="btn btn-secondary btn-sm" id="cal-limpar-todos">Desmarcar tudo</button>
     </div>
   `;
   return html;
 }
 
 function bindPainelCalendario() {
+  // Função única que alterna um dia de um produto (usada por checkbox e pílula)
+  async function alternarDia(produtoId, dia, ativar, elemento) {
+    const produto = State.produtos.find(p => p.id === produtoId);
+    if (!produto) return;
+
+    let dias = Array.isArray(produto.dias) ? [...produto.dias] : [];
+    if (ativar) {
+      if (!dias.includes(dia)) dias.push(dia);
+    } else {
+      dias = dias.filter(d => d !== dia);
+    }
+    dias.sort();
+
+    const diasAnterior = produto.dias;
+    produto.dias = dias.length ? dias : null;
+    if (elemento) elemento.disabled = true;
+    try {
+      await API.atualizarDiasProduto(produtoId, dias);
+      render();
+    } catch (e) {
+      produto.dias = diasAnterior;
+      if (elemento) elemento.disabled = false;
+      render();
+      alert('Não foi possível salvar. Verifique sua conexão e tente novamente.');
+    }
+  }
+
+  // Desktop: checkboxes
   document.querySelectorAll('.chk-dia').forEach(chk => {
-    chk.onchange = async () => {
-      const produtoId = chk.dataset.produto;
-      const dia = parseInt(chk.dataset.dia, 10);
-      const produto = State.produtos.find(p => p.id === produtoId);
-      if (!produto) return;
+    chk.onchange = () => alternarDia(chk.dataset.produto, parseInt(chk.dataset.dia, 10), chk.checked, chk);
+  });
 
-      let dias = Array.isArray(produto.dias) ? [...produto.dias] : [];
-      if (chk.checked) {
-        if (!dias.includes(dia)) dias.push(dia);
-      } else {
-        dias = dias.filter(d => d !== dia);
-      }
-      dias.sort();
-
-      const diasAnterior = produto.dias;
-      produto.dias = dias.length ? dias : null;
-      chk.disabled = true;
-      try {
-        await API.atualizarDiasProduto(produtoId, dias);
-        render();
-      } catch (e) {
-        produto.dias = diasAnterior;
-        chk.checked = !chk.checked;
-        chk.disabled = false;
-        alert('Não foi possível salvar. Verifique sua conexão e tente novamente.');
-      }
+  // Mobile: pílulas (toggle)
+  document.querySelectorAll('.cal-pilula').forEach(btn => {
+    btn.onclick = () => {
+      const ativar = !btn.classList.contains('on');
+      alternarDia(btn.dataset.produto, parseInt(btn.dataset.dia, 10), ativar, btn);
     };
   });
 
@@ -3718,13 +4050,13 @@ function bindPainelCalendario() {
   });
 
   document.getElementById('cal-limpar-todos')?.addEventListener('click', async () => {
-    if (!confirm('Limpar a configuração de dias de todos os lanches? Eles voltam a aparecer todos os dias.')) return;
+    if (!confirm('Desmarcar todos os dias de todos os lanches?\n\nATENÇÃO: com nenhum dia marcado, os lanches NÃO vão aparecer no cardápio dos pais até você marcar os dias de novo.')) return;
     try {
       for (const p of State.produtos.filter(x => x.ativo)) {
         await API.atualizarDiasProduto(p.id, []);
         p.dias = null;
       }
-      mostrarToast('Limpo!');
+      mostrarToast('Desmarcado!');
       render();
     } catch (e) { alert('Erro ao salvar: ' + e.message); }
   });
@@ -3735,7 +4067,8 @@ function renderPainelHistorico() {
   const dias = parseInt(State.periodoHistorico, 10);
   const limite = new Date();
   limite.setDate(limite.getDate() - dias);
-  const limiteISO = limite.toISOString().split('T')[0];
+  // Data local (mesmo critério do HOJE), evitando o desvio de UTC à noite
+  const limiteISO = `${limite.getFullYear()}-${String(limite.getMonth()+1).padStart(2,'0')}-${String(limite.getDate()).padStart(2,'0')}`;
 
   const pedidosPeriodo = State.pedidos
     .filter(p => p.data >= limiteISO && p.statusEntrega !== 'cancelado')
@@ -3890,6 +4223,16 @@ document.addEventListener('DOMContentLoaded', async () => {
   if (!inicializarSupabase()) return;
   await carregarTudo();
   ativarRealtime();
+
+  // A: avisa antes de fechar/atualizar a página com itens no carrinho não reservados
+  window.addEventListener('beforeunload', (e) => {
+    const temCarrinho = Object.values(State.carrinho || {}).some(q => q > 0);
+    if (State.sessao?.tipo === 'pai' && temCarrinho && State.pedidoEtapa !== 'sucesso') {
+      e.preventDefault();
+      e.returnValue = ''; // exigido pelos navegadores para mostrar o aviso
+    }
+  });
+
   State.tela = 'login';
   render();
 });
