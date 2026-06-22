@@ -1550,7 +1550,8 @@ function fromDBPai(p) {
   return {
     id: p.id, nome: p.nome, usuario: p.usuario, email: p.email,
     telefone: p.telefone, senhaHash: p.senha_hash, criadoEm: p.criado_em,
-    senhaTemporaria: p.senha_temporaria !== false // default true se a coluna não existir ainda
+    senhaTemporaria: p.senha_temporaria !== false, // default true se a coluna não existir ainda
+    authUserId: p.auth_user_id || null // vínculo com a conta do Supabase Auth
   };
 }
 function fromDBAluno(a) {
@@ -1601,13 +1602,50 @@ async function carregarTudo() {
     State.alunos = (alunosRes.data || []).map(fromDBAluno);
     State.produtos = (produtosRes.data || []).map(fromDBProduto);
     State.pedidos = (pedidosRes.data || []).map(fromDBPedido);
-    // Senha admin agora vem do código (CONFIG), não mais do banco
+    // Senha admin vem do código (CONFIG), não do banco
     State.senhaAdminHash = CONFIG.SENHA_ADMIN_HASH;
     State.carregando = false;
   } catch (e) {
     console.error('Erro ao carregar dados:', e);
     State.carregando = false;
     alert('Erro ao carregar dados do banco: ' + e.message);
+  }
+}
+
+// Carrega apenas os dados relevantes para o pai logado via Auth.
+// Com RLS ativo, o banco filtra automaticamente — o pai só recebe
+// seus próprios filhos e pedidos. Mais seguro e mais rápido que carregarTudo.
+async function carregarDadosPai(authUserId) {
+  if (!db) return;
+  try {
+    State.carregando = true;
+
+    // Produtos e pedidos: o pai precisa ver todos os produtos disponíveis
+    // e só os próprios pedidos. Com RLS, o banco cuida do filtro de pedidos.
+    const [paiRes, alunosRes, produtosRes, pedidosRes] = await Promise.all([
+      db.from('pais').select('*').eq('auth_user_id', authUserId).single(),
+      db.from('alunos').select('*').order('nome'),
+      db.from('produtos').select('*').order('criado_em'),
+      db.from('pedidos').select('*').order('criado_em', { ascending: false })
+    ]);
+
+    if (paiRes.error) throw paiRes.error;
+    if (alunosRes.error) throw alunosRes.error;
+    if (produtosRes.error) throw produtosRes.error;
+    if (pedidosRes.error) throw pedidosRes.error;
+
+    const pai = fromDBPai(paiRes.data);
+    // State.pais mantém só o pai logado (não expõe todos os responsáveis)
+    State.pais = [pai];
+    State.alunos = (alunosRes.data || []).map(fromDBAluno);
+    State.produtos = (produtosRes.data || []).map(fromDBProduto);
+    State.pedidos = (pedidosRes.data || []).map(fromDBPedido);
+    State.carregando = false;
+    return pai;
+  } catch (e) {
+    console.error('Erro ao carregar dados do pai:', e);
+    State.carregando = false;
+    throw e;
   }
 }
 
@@ -2104,46 +2142,116 @@ function bindLogin() {
     }
   };
 
-  document.getElementById('form-login').onsubmit = e => {
+  document.getElementById('form-login').onsubmit = async (e) => {
     e.preventDefault();
     const senha = document.getElementById('login-senha').value;
     const alerta = document.getElementById('alerta-login');
     alerta.innerHTML = '';
 
+    // Trava contra cliques múltiplos durante o processo (que é assíncrono)
+    const btnSubmit = e.currentTarget.querySelector('button[type="submit"]');
+    if (btnSubmit.dataset.processando === '1') return;
+    btnSubmit.dataset.processando = '1';
+    btnSubmit.disabled = true;
+    btnSubmit.textContent = 'Entrando...';
+
+    const reativarBtn = () => {
+      btnSubmit.dataset.processando = '0';
+      btnSubmit.disabled = false;
+      btnSubmit.textContent = 'Entrar';
+    };
+
     if (State.modoLogin === 'colegio') {
+      // Login admin: mantém validação local (não usa Auth)
       if (hashSenha(senha) === State.senhaAdminHash) {
         State.sessao = { tipo: 'admin' };
         State.tela = 'app';
+        reativarBtn();
         render();
       } else {
         alerta.innerHTML = `<div class="alert alert-erro">${Icons.alert}<span>Senha incorreta.</span></div>`;
+        reativarBtn();
       }
     } else {
+      // Login do pai: tenta Auth primeiro (pais já migrados)
       const loginInput = document.getElementById('login-email').value.trim().toLowerCase().replace(/\s+/g, '');
-      // Procura por usuário OU email
-      const pai = State.pais.find(p =>
-        (p.usuario && p.usuario === loginInput) ||
-        (p.email && p.email === loginInput)
-      );
-      // Mensagem única para usuário inexistente OU senha errada (não revela qual dos dois falhou)
       const erroGenerico = `<div class="alert alert-erro">${Icons.alert}<span>Usuário ou senha incorretos. Em caso de dúvida, entre em contato com o colégio.</span></div>`;
-      if (!pai || pai.senhaHash !== hashSenha(senha)) {
-        alerta.innerHTML = erroGenerico;
-        return;
-      }
-      State.sessao = { tipo: 'pai', userId: pai.id };
-      // Se a senha ainda é temporária, força criar uma senha própria antes de entrar
-      if (pai.senhaTemporaria) {
-        State.tela = 'definir-senha';
+
+      // Detecta se é email ou usuário
+      const ehEmail = loginInput.includes('@');
+
+      if (ehEmail) {
+        // — CAMINHO AUTH: login com email + senha via Supabase Auth —
+        try {
+          const { data: authData, error: authError } = await db.auth.signInWithPassword({
+            email: loginInput,
+            password: senha
+          });
+
+          if (authError || !authData?.user) {
+            // Auth falhou: pode ser usuário ainda não migrado (tentamos legado abaixo)
+            // ou senha realmente errada — não revelamos qual dos dois
+            const paiLegado = State.pais.find(p => p.email === loginInput);
+            if (paiLegado && paiLegado.senhaHash === hashSenha(senha)) {
+              // Ainda no sistema legado (auth_user_id ainda não criado)
+              entrarComoLegado(paiLegado, alerta, reativarBtn);
+            } else {
+              alerta.innerHTML = erroGenerico;
+              reativarBtn();
+            }
+            return;
+          }
+
+          // Auth OK: carrega só os dados deste pai
+          try {
+            const pai = await carregarDadosPai(authData.user.id);
+            if (!pai) throw new Error('Responsável não encontrado');
+            State.sessao = { tipo: 'pai', userId: pai.id, authUserId: authData.user.id };
+            State.tela = 'app';
+            reativarBtn();
+            render();
+          } catch (err) {
+            await db.auth.signOut();
+            alerta.innerHTML = erroGenerico;
+            reativarBtn();
+          }
+        } catch (err) {
+          alerta.innerHTML = `<div class="alert alert-erro">${Icons.alert}<span>Não foi possível conectar. Verifique sua internet e tente novamente.</span></div>`;
+          reativarBtn();
+        }
       } else {
-        State.tela = 'app';
+        // — CAMINHO LEGADO: login por nome de usuário (sem @ = não é email) —
+        // Pais que ainda não migraram pro Auth entram por aqui
+        const paiLegado = State.pais.find(p => p.usuario === loginInput);
+        if (!paiLegado || paiLegado.senhaHash !== hashSenha(senha)) {
+          alerta.innerHTML = erroGenerico;
+          reativarBtn();
+          return;
+        }
+        entrarComoLegado(paiLegado, alerta, reativarBtn);
       }
-      render();
     }
   };
 }
 
-function logout() {
+// Entra no sistema com o responsável pelo caminho legado (sem Auth)
+// Usado durante a transição enquanto alguns pais ainda não foram migrados
+function entrarComoLegado(pai, alerta, reativarBtn) {
+  State.sessao = { tipo: 'pai', userId: pai.id, legado: true };
+  if (pai.senhaTemporaria) {
+    State.tela = 'definir-senha';
+  } else {
+    State.tela = 'app';
+  }
+  reativarBtn();
+  render();
+}
+
+async function logout() {
+  // Se o pai estava logado via Auth (não legado), encerra a sessão no Supabase
+  if (State.sessao?.authUserId && !State.sessao?.legado) {
+    try { await db.auth.signOut(); } catch (e) { /* se falhar, segue o logout local */ }
+  }
   State.sessao = null;
   State.tela = 'login';
   // Reset estado de telas
@@ -2281,7 +2389,18 @@ function bindDefinirSenha() {
 
     try {
       const pai = State.pais.find(p => p.id === State.sessao.userId);
-      await API.definirSenhaPropria(pai.id, hashSenha(nova));
+
+      if (State.sessao.authUserId && !State.sessao.legado) {
+        // Pai logado via Auth: atualiza a senha no Auth (bcrypt profissional)
+        // e marca senha_temporaria = false na tabela pais
+        const { error: authErr } = await db.auth.updateUser({ password: nova });
+        if (authErr) throw authErr;
+        await API.definirSenhaPropria(pai.id, hashSenha(nova));
+      } else {
+        // Caminho legado: atualiza só o hash na tabela pais
+        await API.definirSenhaPropria(pai.id, hashSenha(nova));
+      }
+
       pai.senhaHash = hashSenha(nova);
       pai.senhaTemporaria = false;
       State.tela = 'app';
@@ -4221,6 +4340,30 @@ document.addEventListener('DOMContentLoaded', async () => {
   `;
 
   if (!inicializarSupabase()) return;
+
+  // Verifica se já existe uma sessão Auth ativa (pai voltou sem ter feito logout)
+  const { data: { session } } = await db.auth.getSession();
+
+  if (session?.user) {
+    // Sessão Auth ativa: carrega só os dados deste pai e entra direto
+    try {
+      await carregarTudo(); // produtos e dados globais
+      const pai = await carregarDadosPai(session.user.id);
+      if (pai) {
+        State.sessao = { tipo: 'pai', userId: pai.id, authUserId: session.user.id };
+        State.tela = 'app';
+        ativarRealtime();
+        render();
+        return;
+      }
+    } catch (e) {
+      // Se falhar (ex: auth_user_id não encontrado na tabela pais ainda),
+      // desfaz a sessão e vai pra tela de login normalmente
+      await db.auth.signOut();
+    }
+  }
+
+  // Sem sessão ativa ou sessão inválida: carrega tudo e vai pra login
   await carregarTudo();
   ativarRealtime();
 
