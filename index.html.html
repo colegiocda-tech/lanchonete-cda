@@ -2207,7 +2207,13 @@ function bindLogin() {
             const pai = await carregarDadosPai(authData.user.id);
             if (!pai) throw new Error('Responsável não encontrado');
             State.sessao = { tipo: 'pai', userId: pai.id, authUserId: authData.user.id };
-            State.tela = 'app';
+            // Se a senha ainda é a temporária, força criar uma senha própria
+            // (mesma regra do caminho legado)
+            if (pai.senhaTemporaria) {
+              State.tela = 'definir-senha';
+            } else {
+              State.tela = 'app';
+            }
             reativarBtn();
             render();
           } catch (err) {
@@ -4351,7 +4357,8 @@ document.addEventListener('DOMContentLoaded', async () => {
       const pai = await carregarDadosPai(session.user.id);
       if (pai) {
         State.sessao = { tipo: 'pai', userId: pai.id, authUserId: session.user.id };
-        State.tela = 'app';
+        // Respeita a troca obrigatória de senha se ainda for temporária
+        State.tela = pai.senhaTemporaria ? 'definir-senha' : 'app';
         ativarRealtime();
         render();
         return;
